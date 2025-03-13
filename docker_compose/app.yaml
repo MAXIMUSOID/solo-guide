@@ -1,0 +1,17 @@
+services:
+  main-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: main-app
+    ports: 
+    - "${API_PORT}:8000"
+    command: "uvicorn --factory application.api.main:create_app --reload --host 0.0.0.0"
+    env_file: 
+      - ../.env
+    networks:
+      - postgres
+    depends_on:
+      - postgres
+    volumes:
+      - ../app/:/app/
