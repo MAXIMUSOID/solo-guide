@@ -11,6 +11,7 @@ env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
 DATABASE_URL = f"postgresql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_DB')}"
+# DATABASE_URL = f"postgresql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_DB')}/{env('POSTGRES_TEST_DB')}"
 # engine.connect()
 
 

@@ -12,7 +12,7 @@ router_showplace = APIRouter(tags=['Show Place'])
 
 
 @router.post(
-        '/', 
+        '/add', 
         response_model=CreateCityResponceShema, 
         status_code=status.HTTP_201_CREATED,
         description='Эндпоинт создаёт новый город, если город с таким названием уже существует, то возвращается 400 ошибка',
@@ -31,7 +31,7 @@ async def create_city_handler(schema: CreateCityRequestShema):
 
 
 @router_showplace.post(
-    '/', 
+    '/add', 
         response_model=CreateShowPlaceResponceShema, 
         status_code=status.HTTP_201_CREATED,
         description='Эндпоинт создаёт новую достопримечательность, если достопримечательность с таким названием уже существует, то возвращается 400 ошибка',

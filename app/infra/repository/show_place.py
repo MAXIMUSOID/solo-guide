@@ -25,25 +25,39 @@ def add_city(name:str, country:str) -> model.City:
     return model.City(oid=city_db.id, name=city_db.name, country=city_db.country)
 
 
-def get_city(name:str) -> City | None:
+def get_city(name:str) -> model.City | None:
     '''Get city by citi name'''
     engine = get_engine()
     with Session(engine) as session:
-        city = session.query(City).filter(City.name == name).first()
+        city:City = session.query(City).filter(City.name == name).first()
     
-    return city
+    if not city:
+        return None
+    
+    return model.City(
+        oid=city.id,
+        name=city.name,
+        country=city.country
+    )
 
-def get_city_by_id(id:int) -> City | None:
+def get_city_by_id(id:int) -> model.City | None:
     '''Get city by city id'''
     engine = get_engine()
     with Session(engine) as session:
         city = session.query(City).filter(City.id == id).first()
     
-    return city
+    if not city:
+        return None
+    
+    return model.City(
+        oid=city.id,
+        name=city.name,
+        country=city.country
+    )
 
 def add_show_place(name:str, place_type:PlaceType, description:str, latitude:float, longitude:float, city_name:str, addres:str):
     '''Add show place'''
-    city:City = get_city(city_name)
+    city:model.City = get_city(city_name)
     if not city:
         raise CityNotFoundException(city_name=city_name)
     
@@ -62,7 +76,7 @@ def add_show_place(name:str, place_type:PlaceType, description:str, latitude:flo
             description=description, 
             latitude=latitude, 
             longitude=longitude,
-            city_id=city.id,
+            city_id=city.oid,
             addres=addres
             )
         session.add(show_place)
@@ -81,7 +95,7 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
         raise CityNotFoundException(city_name)
     
     with Session(engine) as session:
-        sp = session.query(ShowPlace).filter(ShowPlace.name == name, ShowPlace.city_id == city.id).first()
+        sp = session.query(ShowPlace).filter(ShowPlace.name == name, ShowPlace.city_id == city.oid).first()
     
     if sp is None:
         raise ShowPlaceNotFoundException(show_place_name=name, city_name=city_name)
@@ -93,7 +107,7 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
         description=sp.description, 
         latitude=sp.latitude, 
         longitude=sp.longitude,
-        city=model.City(oid=city.id, name=city.name, country=city.country),
+        city=city,
         addres=sp.addres
         )
     

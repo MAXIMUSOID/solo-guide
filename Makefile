@@ -38,3 +38,7 @@ app-logs:
 .PHONY: app-shell
 app-shell:
 	${EXEC} ${APP_CONTAINER} bash
+
+.PHONY: pytest
+pytest:
+	${EXEC} ${APP_CONTAINER} pytest
