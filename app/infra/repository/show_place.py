@@ -8,6 +8,7 @@ from infra.repository.model import City, ShowPlace
 
 
 def add_city(name:str, country:str) -> model.City:
+    '''Adding city to database'''
     engine = get_engine()
 
     city = get_city(name)
@@ -25,6 +26,7 @@ def add_city(name:str, country:str) -> model.City:
 
 
 def get_city(name:str) -> model.City | None:
+    '''Get city by citi name'''
     engine = get_engine()
     with Session(engine) as session:
         city = session.query(City).filter(City.name == name).first()
@@ -32,6 +34,7 @@ def get_city(name:str) -> model.City | None:
     return city
 
 def get_city_by_id(id:int) -> model.City | None:
+    '''Get city by city id'''
     engine = get_engine()
     with Session(engine) as session:
         city = session.query(City).filter(City.id == id).first()
