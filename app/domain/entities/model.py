@@ -8,7 +8,7 @@ from domain.entities.place_types import PlaceType
 class Base(ABC):
     oid:int
 
-
+@dataclass
 class User(Base):
     nickname:str
     login:str

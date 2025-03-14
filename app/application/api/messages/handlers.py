@@ -5,7 +5,7 @@ from fastapi.routing import APIRouter
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.base import RepositoryException
 from application.api.messages.shemas import CreateCityRequestShema, CreateCityResponceShema, CreateShowPlaceRequestShema, CreateShowPlaceResponceShema
-from infra.repository.requests_db import add_city, add_show_place
+from infra.repository.show_place import add_city, add_show_place
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])

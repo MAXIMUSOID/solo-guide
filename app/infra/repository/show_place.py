@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from domain.entities.place_types import PlaceType
-from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException
+from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException
 import domain.entities.model as model
 from infra.repository.connect import get_engine
 from infra.repository.model import City, ShowPlace
@@ -25,7 +25,7 @@ def add_city(name:str, country:str) -> model.City:
     return model.City(oid=city_db.id, name=city_db.name, country=city_db.country)
 
 
-def get_city(name:str) -> model.City | None:
+def get_city(name:str) -> City | None:
     '''Get city by citi name'''
     engine = get_engine()
     with Session(engine) as session:
@@ -33,7 +33,7 @@ def get_city(name:str) -> model.City | None:
     
     return city
 
-def get_city_by_id(id:int) -> model.City | None:
+def get_city_by_id(id:int) -> City | None:
     '''Get city by city id'''
     engine = get_engine()
     with Session(engine) as session:
@@ -42,10 +42,18 @@ def get_city_by_id(id:int) -> model.City | None:
     return city
 
 def add_show_place(name:str, place_type:PlaceType, description:str, latitude:float, longitude:float, city_name:str, addres:str):
+    '''Add show place'''
     city:City = get_city(city_name)
     if not city:
-        raise CityNotFoundException(name)
+        raise CityNotFoundException(city_name=city_name)
     
+    try:
+        get_show_place(name=name, city_name=city_name)
+    except ShowPlaceNotFoundException:
+        pass
+    else:
+        raise ShowPlaceAlreadyExistException(show_place_name=name, city_name=city_name)
+
     engine = get_engine()
     with Session(engine) as session:
         show_place = ShowPlace(
@@ -59,20 +67,24 @@ def add_show_place(name:str, place_type:PlaceType, description:str, latitude:flo
             )
         session.add(show_place)
         session.commit()
-    sp = get_show_place(name=name)
+    sp = get_show_place(name=name, city_name=city.name)
     if not sp:
         raise ShowPlaceAddingException(name)
     
     return sp
 
-def get_show_place(name:str) -> model.ShowPlace:
+def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     engine = get_engine()
-    with Session(engine) as session:
-        sp = session.query(ShowPlace).filter(ShowPlace.name == name).first()
     
-    city:City = get_city_by_id(id=sp.city_id)
+    city:model.City = get_city(city_name)
+    if city is None:
+        raise CityNotFoundException(city_name)
+    
+    with Session(engine) as session:
+        sp = session.query(ShowPlace).filter(ShowPlace.name == name, ShowPlace.city_id == city.id).first()
+    
     if sp is None:
-        return None
+        raise ShowPlaceNotFoundException(show_place_name=name, city_name=city_name)
     
     return model.ShowPlace(
         oid=sp.id, 
