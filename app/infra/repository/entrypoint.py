@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
 
-from infra.repository.converter import convert_city_to_model, convert_show_place_to_model
+from infra.repository.exceptions.user import UserAlreadyExistException, UserNotFoundException, UserCreateException
+from infra.repository.converter import convert_city_to_model, convert_show_place_to_model, convert_user_to_model
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException
 import domain.entities.model as model
 from infra.repository.connect import get_engine
-from infra.repository.model import City, ShowPlace
+from infra.repository.model import City, ShowPlace, User
 
 
 def add_city(city:model.City) -> City:
@@ -80,15 +81,58 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     with Session(engine) as session:
         query = session.query(ShowPlace, City).join(City, ShowPlace.city_id == City.id).filter(ShowPlace.name == name, City.name == city_name).first()
     
-    
     if query is None:
         raise ShowPlaceNotFoundException(show_place_name=name, city_name=city_name)
+
+    return convert_show_place_to_model(query[0], convert_city_to_model(query[1]))
+
+
+def check_user(login:str) -> bool:
+    engine = get_engine()
+
+    with Session(engine) as session:
+        return bool(session.query(User).filter(User.login == login).first())
     
-    showplace:ShowPlace = query[0]
-    city:City = convert_city_to_model(query[1])
 
-    return convert_show_place_to_model(showplace, city)
+def check_user_password(user:User, password:str) -> bool:
+    if not check_user(user.login):
+        raise UserNotFoundException(user.login)
+
+    engine = get_engine()
+    with Session(engine) as session:
+        result = session.query(User).filter(User.login == user.login,
+                                            User.nickname == user.nickname, 
+                                            User.password == model.User.get_password_hash(password)).first()
+        return bool(result)
+
+def get_user(login:str) -> User:
+    engine = get_engine()
+
+    with Session(engine) as session:
+        user = session.query(User).filter(User.login == login).first()
+
+    if not user:
+        raise UserNotFoundException(user.login)
 
 
-def add_user():
-    ...
+def add_user(user:model.User, password:str) -> model.User:
+    if check_user(user.login):
+        raise UserAlreadyExistException(user.login)
+    
+    engine = get_engine()
+    with Session(engine) as session:
+        new_user:User = User(
+            nickname=user.nickname,
+            login=user.login,
+            password=model.User.get_password_hash(password)
+        )
+        session.add(new_user)
+        session.commit()
+
+        user_db:User = session.query(User).filter(User.login == user.login).first()
+        
+        if not user_db:
+            raise UserCreateException(user.login)
+
+        return convert_user_to_model(user_db)
+        

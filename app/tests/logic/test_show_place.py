@@ -1,11 +1,11 @@
 import pytest
 
-from domain.entities.model import City, ShowPlace
+from domain.entities.model import City, ShowPlace, User
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException
 from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
-from infra.repository.show_place import add_city, add_show_place
+from infra.repository.entrypoint import add_city, add_show_place, add_user, check_user_password
 
 
 _init_db(is_test=True)
@@ -43,5 +43,18 @@ def test_add_show_place_unnown_city():
     clear_all()
     with pytest.raises(CityNotFoundException):
         city=City("1", "1")
-        showplace = ShowPlace("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city=city, addres="")
+        showplace = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
         add_show_place(showplace)
+
+def test_add_user():
+    clear_all()
+    user:User = User("MAX", "MAX")
+    user_added = add_user(user, "12345")
+    assert user == user_added
+
+def test_check_password():
+    clear_all()
+    user:User = User("MAX", "MAX")
+    user_added = add_user(user, "12345")
+
+    assert check_user_password(user_added, "12345")

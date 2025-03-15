@@ -6,7 +6,9 @@ from domain.exceptions.model import (CityCountryToLongException,
                                      CityNameToLongException, 
                                      PlaceTypeNotFoundException, 
                                      ShowPlaceEmptyNameException, 
-                                     ShowPlaceNameToLongException, UserLoginEmptyException, UserLoginToLongException, 
+                                     ShowPlaceNameToLongException, 
+                                     UserLoginEmptyException, 
+                                     UserLoginToLongException, 
                                      UserNicknameEmptyException, 
                                      UserNicknameToLongException,
                                      )
@@ -62,10 +64,6 @@ def test_place_type_not_found():
 
 def test_create_user():
     user = User("Max", "max")
-    user.password = User.get_password_hash("test_password")
-    # assert User.get_password_hash("test_password") != "test_password"
-    # raise ValueError(user.password)
-    assert user.check_password("test_password")
 
 def test_empty_nickname():
     with pytest.raises(UserNicknameEmptyException):

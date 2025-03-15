@@ -1,5 +1,5 @@
 
-from infra.repository.model import City, ShowPlace
+from infra.repository.model import City, ShowPlace, User
 import domain.entities.model as model
 
 
@@ -20,3 +20,10 @@ def convert_show_place_to_model(show_place:ShowPlace, city:City) -> model.ShowPl
         city=city,
         addres=show_place.addres
         )
+
+
+def convert_user_to_model(user:User) -> model.User:
+    return model.User(
+        nickname=user.nickname,
+        login=user.login,
+    )

@@ -26,7 +26,6 @@ class Base(ABC):
 class User(BaseValueObject):
     nickname:str
     login:str
-    password:str = field(default=None)
 
     def validate(self):
         if self.nickname == "":
@@ -41,9 +40,6 @@ class User(BaseValueObject):
         if len(self.login) > 255:
             raise UserLoginToLongException(self.login)
 
-
-    def check_password(self, password) -> bool:
-        return self.password == User.get_password_hash(password)
     
     def is_generic_type(self) -> str:
         return self.nickname

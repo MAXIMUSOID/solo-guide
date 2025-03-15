@@ -8,7 +8,7 @@ from infra.repository.converter import convert_city_to_model
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.base import RepositoryException
 from application.api.messages.shemas import CreateCityRequestShema, CreateCityResponceShema, CreateShowPlaceRequestShema, CreateShowPlaceResponceShema
-from infra.repository.show_place import add_city, add_show_place, get_city
+from app.infra.repository.entrypoint import add_city, add_show_place, get_city
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
