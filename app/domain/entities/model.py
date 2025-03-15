@@ -33,8 +33,8 @@ class City(BaseValueObject):
 
 @dataclass
 class ShowPlace(BaseValueObject):
-    _place_type:PlaceType
     name:str
+    _place_type:str
     description:str
     latitude:float
     longitude:float
@@ -42,9 +42,12 @@ class ShowPlace(BaseValueObject):
     addres:str
 
     @property
-    def place_type(self):
-        return PlaceType(self._place_type).value
+    def place_type(self) -> PlaceType:
+        return PlaceType(self._place_type)
     
+    def __post_init__(self):
+        self.validate()
+
     def validate(self):
         ...
         

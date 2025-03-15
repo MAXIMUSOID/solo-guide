@@ -2,10 +2,12 @@ from fastapi import Depends, status
 from fastapi import HTTPException
 from fastapi.routing import APIRouter
 
+from domain.entities.model import City, ShowPlace
+from infra.repository.converter import convert_city_to_model
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.base import RepositoryException
 from application.api.messages.shemas import CreateCityRequestShema, CreateCityResponceShema, CreateShowPlaceRequestShema, CreateShowPlaceResponceShema
-from infra.repository.show_place import add_city, add_show_place
+from infra.repository.show_place import add_city, add_show_place, get_city
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
@@ -24,7 +26,8 @@ router_showplace = APIRouter(tags=['Show Place'])
 async def create_city_handler(schema: CreateCityRequestShema):
     '''Создать новый город'''
     try:
-        city = add_city(name=schema.name, country=schema.country)
+        _city = City(name=schema.name, country=schema.country)
+        city = convert_city_to_model(add_city(_city))
     except RepositoryException as exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
     return CreateCityResponceShema.from_entity(city)
@@ -40,16 +43,20 @@ async def create_city_handler(schema: CreateCityRequestShema):
             # status.HTTP_400_BAD_REQUEST: {'model': ErrorSchema}
         })
 async def create_show_place(schema: CreateShowPlaceRequestShema):
-    '''Создать новый город'''
+    '''Создать новую достопримечательность'''
     try:
-        show_place = add_show_place(
+        city = convert_city_to_model(get_city(schema.city_name))
+        _show_place = ShowPlace(
             name=schema.name, 
-            place_type=PlaceType(schema.place_type),
+            _place_type=PlaceType(schema.place_type),
             description=schema.description,
             latitude=schema.latitude,
             longitude=schema.longitude,
-            city_name=schema.city_name,
+            city=city,
             addres=schema.addres)
+        
+        show_place = add_show_place(_show_place)
+            
     except RepositoryException as exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
     return CreateShowPlaceResponceShema.from_entity(show_place)

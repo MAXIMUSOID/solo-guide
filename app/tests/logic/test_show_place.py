@@ -1,5 +1,6 @@
 import pytest
 
+from domain.entities.model import City, ShowPlace
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException
 from infra.repository.clear_db import clear_all
@@ -13,28 +14,37 @@ import environ
 _init_db(is_test=True)
 def test_add_city():
     clear_all()
-    add_city(name="Сургут", country="Россия")
+    city = City(name="Сургут", country="Россия")
+    add_city(city)
 
 def test_add_unique_city():
     clear_all()
+    city = City(name="Сургут", country="Россия")
+    
     with pytest.raises(CityAlreadyExistException):
-        add_city(name="Сургут", country="Россия")
-        add_city(name="Сургут", country="Россия")
+        add_city(city)
+        add_city(city)
 
 def test_add_show_place():
     clear_all()
-    city = add_city(name="Сургут", country="Россия")
-    showplace = add_show_place("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city_name="Сургут", addres="")
-    assert city == showplace.city
+    city = City(name="Сургут", country="Россия")
+    showplace = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
+    _city = add_city(city)
+    sp = add_show_place(showplace)
+    assert city == sp.city
 
 def test_add_show_place_unique():
     clear_all()
-    city = add_city(name="Сургут", country="Россия")
+    city = City(name="Сургут", country="Россия")
+    _city = add_city(city)
+    showplace = ShowPlace("ГРЭС", "Архитектурный", "", latitude=0, longitude=0, city=city, addres="")
     with pytest.raises(ShowPlaceAlreadyExistException):
-        showplace = add_show_place("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city_name="Сургут", addres="")
-        showplace = add_show_place("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city_name="Сургут", addres="")
+        add_show_place(showplace)
+        add_show_place(showplace)
 
 def test_add_show_place_unnown_city():
     clear_all()
     with pytest.raises(CityNotFoundException):
-        add_show_place("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city_name="Сургут", addres="")
+        city=City("", "")
+        showplace = ShowPlace("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city=city, addres="")
+        add_show_place(showplace)
