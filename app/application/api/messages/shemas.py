@@ -9,14 +9,12 @@ class CreateCityRequestShema(BaseModel):
 
 
 class CreateCityResponceShema(BaseModel):
-    oid: int
     name:str
     country:str
 
     @classmethod
     def from_entity(cls, city: City) -> 'CreateCityResponceShema':
         return CreateCityResponceShema(
-            oid=city.oid,
             name=city.name,
             country=city.country
         )
@@ -32,7 +30,6 @@ class CreateShowPlaceRequestShema(BaseModel):
     addres:str
 
 class CreateShowPlaceResponceShema(BaseModel):
-    oid:int
     name:str
     place_type:str
     description:str
@@ -43,7 +40,6 @@ class CreateShowPlaceResponceShema(BaseModel):
     @classmethod
     def from_entity(cls, showplace: ShowPlace) -> 'CreateShowPlaceResponceShema':
         return CreateShowPlaceResponceShema(
-            oid=showplace.oid,
             name=showplace.name,
             place_type=showplace.place_type,
             description=showplace.description,

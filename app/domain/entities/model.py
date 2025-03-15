@@ -2,6 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import date
 
+from domain.entities.base import BaseValueObject
 from domain.entities.place_types import PlaceType
 
 @dataclass
@@ -9,17 +10,29 @@ class Base(ABC):
     oid:int
 
 @dataclass
-class User(Base):
+class User(BaseValueObject):
     nickname:str
     login:str
 
+    def validate(self):
+        ...
+
+    def is_generic_type(self):
+        return self.nickname
+
 @dataclass
-class City(Base):
+class City(BaseValueObject):
     name:str
     country:str
 
+    def validate(self):
+        ...
+        
+    def is_generic_type(self):
+        return f"{self.name}, {self.country}"
+
 @dataclass
-class ShowPlace(Base):
+class ShowPlace(BaseValueObject):
     _place_type:PlaceType
     name:str
     description:str
@@ -31,16 +44,34 @@ class ShowPlace(Base):
     @property
     def place_type(self):
         return PlaceType(self._place_type).value
+    
+    def validate(self):
+        ...
+        
+    def is_generic_type(self):
+        return self.name
 
 @dataclass
-class Visit(Base):
+class Visit(BaseValueObject):
     user_id:int
     show_place_id:int
     grade:int
     review:int
     datetime:date
 
+    def validate(self):
+        ...
+        
+    def is_generic_type(self):
+        return f"{self.user_id}"
+
 @dataclass
-class Favorite(Base):
+class Favorite(BaseValueObject):
     user_id:int
     show_place_id:int
+
+    def validate(self):
+        ...
+        
+    def is_generic_type(self):
+        return f"{self.user_id}"

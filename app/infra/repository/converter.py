@@ -6,14 +6,12 @@ import domain.entities.model as model
 
 def convert_city_to_model(city:City) -> model.City:
     return model.City(
-        oid=city.id,
         name=city.name,
         country=city.country
     )
 
 def convert_show_place_to_model(show_place:ShowPlace, city:City) -> model.ShowPlace:
     return model.ShowPlace(
-        oid=show_place.id, 
         name=show_place.name,
         _place_type=show_place.place_type, 
         description=show_place.description, 

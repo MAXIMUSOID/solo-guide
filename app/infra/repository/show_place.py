@@ -8,7 +8,7 @@ from infra.repository.connect import get_engine
 from infra.repository.model import City, ShowPlace
 
 
-def add_city(name:str, country:str) -> model.City:
+def add_city(name:str, country:str) -> City:
     '''Adding city to database'''
     engine = get_engine()
 
@@ -23,15 +23,10 @@ def add_city(name:str, country:str) -> model.City:
         session.commit()
 
         city_db = session.query(City).filter(City.name == name).first()
-    return model.City(oid=city_db.id, name=city_db.name, country=city_db.country)
+    return convert_city_to_model(city_db)
 
 
-
-
-
-
-
-def get_city(name:str) -> model.City | None:
+def get_city(name:str) -> City | None:
     '''Get city by citi name'''
     engine = get_engine()
     with Session(engine) as session:
@@ -40,7 +35,7 @@ def get_city(name:str) -> model.City | None:
     if not city:
         return None
     
-    return convert_city_to_model(city)
+    return city
 
 
 def get_city_by_id(id:int) -> model.City | None:
@@ -57,7 +52,7 @@ def get_city_by_id(id:int) -> model.City | None:
 
 def add_show_place(name:str, place_type:PlaceType, description:str, latitude:float, longitude:float, city_name:str, addres:str):
     '''Add show place'''
-    city:model.City = get_city(city_name)
+    city:City = get_city(city_name)
     if not city:
         raise CityNotFoundException(city_name=city_name)
     
@@ -76,7 +71,7 @@ def add_show_place(name:str, place_type:PlaceType, description:str, latitude:flo
             description=description, 
             latitude=latitude, 
             longitude=longitude,
-            city_id=city.oid,
+            city_id=city.id,
             addres=addres
             )
         session.add(show_place)
@@ -91,8 +86,7 @@ def add_show_place(name:str, place_type:PlaceType, description:str, latitude:flo
 def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     engine = get_engine()
     
-    city:model.City = get_city(city_name)
-    if city is None:
+    if get_city(city_name) is None:
         raise CityNotFoundException(city_name)
     
     with Session(engine) as session:
@@ -101,7 +95,6 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     if query is None:
         raise ShowPlaceNotFoundException(show_place_name=name, city_name=city_name)
     
-
     showplace:ShowPlace = query[0]
     city:City = convert_city_to_model(query[1])
 

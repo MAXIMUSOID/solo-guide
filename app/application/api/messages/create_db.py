@@ -12,7 +12,7 @@ router = APIRouter(tags=['DB'])
 @router.post(
         '/',
         status_code=status.HTTP_201_CREATED,
-        description='Эндпоинт создаёт новую комнату, если комната с таким именем уже существует, то возвращается 400 ошибка',
+        description='Эндпоинт создаёт новую таблицу',
 )
 async def create_database():
     '''Создать новую музыкальную комнату'''
@@ -21,7 +21,7 @@ async def create_database():
     # print(BASE_DIR)
     env = environ.Env()
     environ.Env.read_env(BASE_DIR / '.env')
-    DATABASE_URL = f"postgresql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_DB')}"
+    DATABASE_URL = f"postgresql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_TEST_DB')}"
     engine = create_engine(DATABASE_URL, echo=True)
     model.Base.metadata.create_all(engine)
     
