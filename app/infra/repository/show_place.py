@@ -16,7 +16,6 @@ def add_city(city:model.City) -> City:
     if _city:
         raise CityAlreadyExistException(city.name)
     
-    
     with Session(engine) as session:
         city_db:City = City(name=city.name, country=city.country)
         session.add(city_db)
@@ -44,14 +43,13 @@ def add_show_place(show_place:model.ShowPlace)->model.ShowPlace:
     if not city_db:
         raise CityNotFoundException(city_name=show_place.city.name)
     
-    # raise ValueError(ShowPlace(show_place.place_type))
     try:
-        
         get_show_place(name=show_place.name, city_name=show_place.city.name)
     except ShowPlaceNotFoundException:
         pass
     else:
         raise ShowPlaceAlreadyExistException(show_place_name=show_place.name, city_name=show_place.city.name)
+    
     engine = get_engine()
     with Session(engine) as session:
         
@@ -66,6 +64,7 @@ def add_show_place(show_place:model.ShowPlace)->model.ShowPlace:
             )
         session.add(sp)
         session.commit()
+        
     sp = get_show_place(name=show_place.name, city_name=show_place.city.name)
     if not sp:
         raise ShowPlaceAddingException(show_place.name)
@@ -89,3 +88,7 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     city:City = convert_city_to_model(query[1])
 
     return convert_show_place_to_model(showplace, city)
+
+
+def add_user():
+    ...

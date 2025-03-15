@@ -21,7 +21,7 @@ async def create_database():
     # print(BASE_DIR)
     env = environ.Env()
     environ.Env.read_env(BASE_DIR / '.env')
-    DATABASE_URL = f"postgresql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_TEST_DB')}"
+    DATABASE_URL = f"postgresql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_DB')}"
     engine = create_engine(DATABASE_URL, echo=True)
     model.Base.metadata.create_all(engine)
     

@@ -1,8 +1,20 @@
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
+from hashlib import sha256
 
-from domain.exceptions.model import CityCountryToLongException, CityEmptyCountryException, CityEmptyNameException, CityNameToLongException, PlaceTypeNotFoundException, ShowPlaceEmptyNameException, ShowPlaceNameToLongException
+from domain.exceptions.model import (CityCountryToLongException, 
+                                     CityEmptyCountryException, 
+                                     CityEmptyNameException, 
+                                     CityNameToLongException, 
+                                     PlaceTypeNotFoundException, 
+                                     ShowPlaceEmptyNameException, 
+                                     ShowPlaceNameToLongException, 
+                                     UserLoginEmptyException, 
+                                     UserLoginToLongException, 
+                                     UserNicknameEmptyException, 
+                                     UserNicknameToLongException,
+                                     )
 from domain.entities.base import BaseValueObject
 from domain.entities.place_types import PlaceType
 
@@ -14,12 +26,31 @@ class Base(ABC):
 class User(BaseValueObject):
     nickname:str
     login:str
+    password:str = field(default=None)
 
     def validate(self):
-        ...
+        if self.nickname == "":
+            raise UserNicknameEmptyException()
+        
+        if len(self.nickname) > 255:
+            raise UserNicknameToLongException(self.nickname)
+        
+        if self.login == "":
+            raise UserLoginEmptyException()
+        
+        if len(self.login) > 255:
+            raise UserLoginToLongException(self.login)
 
-    def is_generic_type(self):
+
+    def check_password(self, password) -> bool:
+        return self.password == User.get_password_hash(password)
+    
+    def is_generic_type(self) -> str:
         return self.nickname
+    
+    @classmethod
+    def get_password_hash(cls, password:str) -> str:
+        return sha256(password.encode()).hexdigest()
 
 @dataclass
 class City(BaseValueObject):

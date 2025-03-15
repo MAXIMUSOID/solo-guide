@@ -15,8 +15,8 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    nickname: Mapped[str] = mapped_column(nullable=False)
-    login: Mapped[str] = mapped_column(nullable=False)
+    nickname: Mapped[str] = mapped_column(nullable=False, unique=True)
+    login: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
 
            

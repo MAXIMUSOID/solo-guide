@@ -1,7 +1,16 @@
 import pytest
 
-from domain.exceptions.model import CityCountryToLongException, CityEmptyCountryException, CityEmptyNameException, CityNameToLongException, PlaceTypeNotFoundException, ShowPlaceEmptyNameException, ShowPlaceNameToLongException
-from domain.entities.model import City, ShowPlace
+from domain.exceptions.model import (CityCountryToLongException, 
+                                     CityEmptyCountryException, 
+                                     CityEmptyNameException, 
+                                     CityNameToLongException, 
+                                     PlaceTypeNotFoundException, 
+                                     ShowPlaceEmptyNameException, 
+                                     ShowPlaceNameToLongException, UserLoginEmptyException, UserLoginToLongException, 
+                                     UserNicknameEmptyException, 
+                                     UserNicknameToLongException,
+                                     )
+from domain.entities.model import City, ShowPlace, User
 
 
 def test_create_city():
@@ -49,3 +58,27 @@ def test_place_type_not_found():
     with pytest.raises(PlaceTypeNotFoundException):
         city = City("Сургут", "Россия")
         show_place = ShowPlace("ГРЭС", "Архитектурный1", "", 0, 0, city, "")
+
+
+def test_create_user():
+    user = User("Max", "max")
+    user.password = User.get_password_hash("test_password")
+    # assert User.get_password_hash("test_password") != "test_password"
+    # raise ValueError(user.password)
+    assert user.check_password("test_password")
+
+def test_empty_nickname():
+    with pytest.raises(UserNicknameEmptyException):
+        user = User("", "max")
+
+def test_to_long_nickname():
+    with pytest.raises(UserNicknameToLongException):
+        user = User("1"*256, "max")
+
+def test_empty_login():
+    with pytest.raises(UserLoginEmptyException):
+        user = User("12", "")
+
+def test_to_long_login():
+    with pytest.raises(UserLoginToLongException):
+        user = User("1", "m"*256)

@@ -59,3 +59,36 @@ class ShowPlaceNameToLongException(BaseEntityException):
     @property
     def message(self):
         return f"Слишком длинное название достопримечательности {self.name[:255]}"
+    
+
+@dataclass
+class UserNicknameEmptyException(BaseEntityException):
+    @property
+    def message(self):
+        return f"Отсутствует имя пользователя"
+    
+
+@dataclass
+class UserNicknameToLongException(BaseEntityException):
+    nickname:str
+
+    @property
+    def message(self):
+        return f"Слишком длинное имя пользователя {self.nickname[:255]}"
+    
+
+@dataclass
+class UserLoginEmptyException(BaseEntityException):
+    @property
+    def message(self):
+        return f"Отсутствует логин"
+    
+
+@dataclass
+class UserLoginToLongException(BaseEntityException):
+    login:str
+
+    @property
+    def message(self):
+        return f"Слишком длинный логин {self.login[:255]}"
+    
