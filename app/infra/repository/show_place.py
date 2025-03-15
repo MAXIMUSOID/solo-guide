@@ -38,18 +38,6 @@ def get_city(name:str) -> City | None:
     return city
 
 
-def get_city_by_id(id:int) -> model.City | None:
-    '''Get city by city id'''
-    engine = get_engine()
-    with Session(engine) as session:
-        city = session.query(City).filter(City.id == id).first()
-    
-    if not city:
-        return None
-    
-    return convert_city_to_model(city)
-
-
 def add_show_place(show_place:model.ShowPlace)->model.ShowPlace:
     '''Add show place'''
     city_db = get_city(show_place.city.name)

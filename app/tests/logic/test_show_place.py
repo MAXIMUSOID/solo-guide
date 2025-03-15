@@ -7,9 +7,6 @@ from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
 from infra.repository.show_place import add_city, add_show_place
 
-from pathlib import Path
-
-import environ
 
 _init_db(is_test=True)
 def test_add_city():
@@ -45,6 +42,6 @@ def test_add_show_place_unique():
 def test_add_show_place_unnown_city():
     clear_all()
     with pytest.raises(CityNotFoundException):
-        city=City("", "")
+        city=City("1", "1")
         showplace = ShowPlace("ГРЭС", PlaceType("Архитектурный"), "", latitude=0, longitude=0, city=city, addres="")
         add_show_place(showplace)

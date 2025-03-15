@@ -2,6 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import date
 
+from domain.exceptions.model import CityCountryToLongException, CityEmptyCountryException, CityEmptyNameException, CityNameToLongException, PlaceTypeNotFoundException, ShowPlaceEmptyNameException, ShowPlaceNameToLongException
 from domain.entities.base import BaseValueObject
 from domain.entities.place_types import PlaceType
 
@@ -26,7 +27,17 @@ class City(BaseValueObject):
     country:str
 
     def validate(self):
-        ...
+        if self.name == "":
+            raise CityEmptyNameException()
+        
+        if len(self.name) > 255:
+            raise CityNameToLongException(self.name)
+        
+        if self.country == "":
+            raise CityEmptyCountryException()
+        
+        if len(self.country) > 255:
+            raise CityCountryToLongException(self.name)
         
     def is_generic_type(self):
         return f"{self.name}, {self.country}"
@@ -49,7 +60,17 @@ class ShowPlace(BaseValueObject):
         self.validate()
 
     def validate(self):
-        ...
+        try:
+            self.place_type
+        except:
+            raise PlaceTypeNotFoundException(self._place_type)
+        
+        if self.name == "":
+            raise ShowPlaceEmptyNameException()
+        
+        if len(self.name) > 255:
+            raise ShowPlaceNameToLongException(self.name)
+        
         
     def is_generic_type(self):
         return self.name
