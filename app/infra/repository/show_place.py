@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from infra.repository.converter import convert_city_to_model, convert_show_place_to_model
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException
 import domain.entities.model as model
@@ -25,6 +26,11 @@ def add_city(name:str, country:str) -> model.City:
     return model.City(oid=city_db.id, name=city_db.name, country=city_db.country)
 
 
+
+
+
+
+
 def get_city(name:str) -> model.City | None:
     '''Get city by citi name'''
     engine = get_engine()
@@ -34,11 +40,8 @@ def get_city(name:str) -> model.City | None:
     if not city:
         return None
     
-    return model.City(
-        oid=city.id,
-        name=city.name,
-        country=city.country
-    )
+    return convert_city_to_model(city)
+
 
 def get_city_by_id(id:int) -> model.City | None:
     '''Get city by city id'''
@@ -49,11 +52,8 @@ def get_city_by_id(id:int) -> model.City | None:
     if not city:
         return None
     
-    return model.City(
-        oid=city.id,
-        name=city.name,
-        country=city.country
-    )
+    return convert_city_to_model(city)
+
 
 def add_show_place(name:str, place_type:PlaceType, description:str, latitude:float, longitude:float, city_name:str, addres:str):
     '''Add show place'''
@@ -87,6 +87,7 @@ def add_show_place(name:str, place_type:PlaceType, description:str, latitude:flo
     
     return sp
 
+
 def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     engine = get_engine()
     
@@ -95,19 +96,13 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
         raise CityNotFoundException(city_name)
     
     with Session(engine) as session:
-        sp = session.query(ShowPlace).filter(ShowPlace.name == name, ShowPlace.city_id == city.oid).first()
+        query = session.query(ShowPlace, City).join(City, ShowPlace.city_id == City.id).filter(ShowPlace.name == name, City.name == city_name).first()
     
-    if sp is None:
+    if query is None:
         raise ShowPlaceNotFoundException(show_place_name=name, city_name=city_name)
     
-    return model.ShowPlace(
-        oid=sp.id, 
-        name=sp.name,
-        _place_type=sp.place_type, 
-        description=sp.description, 
-        latitude=sp.latitude, 
-        longitude=sp.longitude,
-        city=city,
-        addres=sp.addres
-        )
-    
+
+    showplace:ShowPlace = query[0]
+    city:City = convert_city_to_model(query[1])
+
+    return convert_show_place_to_model(showplace, city)
