@@ -63,6 +63,7 @@ def test_name_to_long_show_place():
         city = City("1", "Россия")
         show_place = ShowPlace("Г"*256, "Архитектурный", "", 0, 0, city, "")
 
+
 def test_place_type_not_found():
     with pytest.raises(PlaceTypeNotFoundException):
         city = City("Сургут", "Россия")
