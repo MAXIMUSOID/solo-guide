@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from hashlib import sha256
 
 from domain.exceptions.model import (CityCountryToLongException, 
@@ -13,7 +13,10 @@ from domain.exceptions.model import (CityCountryToLongException,
                                      UserLoginEmptyException, 
                                      UserLoginToLongException, 
                                      UserNicknameEmptyException, 
-                                     UserNicknameToLongException,
+                                     UserNicknameToLongException, 
+                                     VisitEmptyShowPlaceException, 
+                                     VisitEmptyUserException, 
+                                     VisitGradeIncorrectException, VisitReviewToLongException,
                                      )
 from domain.entities.base import BaseValueObject
 from domain.entities.place_types import PlaceType
@@ -42,7 +45,7 @@ class User(BaseValueObject):
 
     
     def is_generic_type(self) -> str:
-        return self.nickname
+        return self.login
     
     @classmethod
     def get_password_hash(cls, password:str) -> str:
@@ -104,25 +107,35 @@ class ShowPlace(BaseValueObject):
 
 @dataclass
 class Visit(BaseValueObject):
-    user_id:int
-    show_place_id:int
+    user:User
+    show_place:ShowPlace
     grade:int
-    review:int
-    datetime:date
+    review:str
+    create_at:datetime = field(default_factory=datetime.now)
 
     def validate(self):
-        ...
+        if self.user is None:
+            raise VisitEmptyUserException()
+        if self.show_place is None:
+            raise VisitEmptyShowPlaceException()
+        if not -1 < self.grade < 6:
+            raise VisitGradeIncorrectException(self.grade)
+        if len(self.review) > 255:
+            raise VisitReviewToLongException(self.review)
+        
+
+
         
     def is_generic_type(self):
-        return f"{self.user_id}"
+        return f"{self.user.login}"
 
 @dataclass
 class Favorite(BaseValueObject):
-    user_id:int
-    show_place_id:int
+    user:User
+    show_place:ShowPlace
 
     def validate(self):
         ...
         
     def is_generic_type(self):
-        return f"{self.user_id}"
+        return f"{self.user.login}"

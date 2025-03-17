@@ -1,3 +1,4 @@
+from datetime import datetime
 import pytest
 
 from domain.exceptions.model import (CityCountryToLongException, 
@@ -10,11 +11,14 @@ from domain.exceptions.model import (CityCountryToLongException,
                                      UserLoginEmptyException, 
                                      UserLoginToLongException, 
                                      UserNicknameEmptyException, 
-                                     UserNicknameToLongException,
+                                     UserNicknameToLongException, VisitEmptyShowPlaceException, VisitEmptyUserException, VisitGradeIncorrectException, VisitReviewToLongException,
                                      )
-from domain.entities.model import City, ShowPlace, User
+from domain.entities.model import City, ShowPlace, User, Visit
 
 
+'''
+Тестирование создания города
+'''
 def test_create_city():
     city = City("Сургут", "Россия")
 
@@ -39,6 +43,9 @@ def test_long_country_name_city():
         city = City("a", "1"*256)
 
 
+'''
+Тестирование создания достопримечательности
+'''
 def test_create_show_place():
     city = City("Сургут", "Россия")
     show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
@@ -62,6 +69,9 @@ def test_place_type_not_found():
         show_place = ShowPlace("ГРЭС", "Архитектурный1", "", 0, 0, city, "")
 
 
+'''
+Тестирование создания пользователя
+'''
 def test_create_user():
     user = User("Max", "max")
 
@@ -80,3 +90,81 @@ def test_empty_login():
 def test_to_long_login():
     with pytest.raises(UserLoginToLongException):
         user = User("1", "m"*256)
+
+
+'''
+Тестирование создание информации о визите достопримечательности пользователем
+'''
+def test_add_visit():
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+    user = User("Max", "max")
+    visit = Visit(
+        user=user,
+        show_place=show_place,
+        grade=5,
+        review="Хорошее место"
+    )
+    assert visit.create_at.date() == datetime.now().date()
+
+
+def test_visit_empty_user():
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+
+    with pytest.raises(VisitEmptyUserException):
+        visit = Visit(
+        user=None,
+        show_place=show_place,
+        grade=5,
+        review="Хорошее место"
+    )
+        
+
+def test_visit_empty_show_place():
+    user = User("Max", "max")
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+
+    with pytest.raises(VisitEmptyShowPlaceException):
+        visit = Visit(
+        user=user,
+        show_place=None,
+        grade=5,
+        review="Хорошее место"
+    )
+        
+
+def test_visit_incorrect_grade():
+    user = User("Max", "max")
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+
+    with pytest.raises(VisitGradeIncorrectException):
+        visit = Visit(
+        user=user,
+        show_place=show_place,
+        grade=-1,
+        review="Хорошее место"
+    )
+        
+    with pytest.raises(VisitGradeIncorrectException):
+        visit = Visit(
+        user=user,
+        show_place=show_place,
+        grade=6,
+        review="Хорошее место"
+    )
+        
+
+def test_add_visit():
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+    user = User("Max", "max")
+    with pytest.raises(VisitReviewToLongException):
+        visit = Visit(
+            user=user,
+            show_place=show_place,
+            grade=5,
+            review="1"*256
+        )

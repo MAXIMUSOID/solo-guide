@@ -92,3 +92,34 @@ class UserLoginToLongException(BaseEntityException):
     def message(self):
         return f"Слишком длинный логин {self.login[:255]}"
     
+
+@dataclass
+class VisitEmptyUserException(BaseEntityException):
+    @property
+    def message(self):
+        return f"Для регистрации визита следует указать пользователя"
+    
+
+@dataclass
+class VisitEmptyShowPlaceException(BaseEntityException):
+    @property
+    def message(self):
+        return f"Для регистрации визита следует достопримечательность"
+    
+@dataclass
+class VisitGradeIncorrectException(BaseEntityException):
+    grade:int
+    
+    @property
+    def message(self):
+        return f"Оценка {self.grade} выходит за рамки 0-5"
+    
+@dataclass
+class VisitReviewToLongException(BaseEntityException):
+    review:str
+    
+    @property
+    def message(self):
+        return f"Слишком длинный обзор {self.review}"
+
+    
