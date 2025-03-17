@@ -50,6 +50,7 @@ class Visit(Base):
     grade: Mapped[int]
     review: Mapped[str]
     datetime:Mapped[date] = mapped_column(default=datetime.now())
+    
 
 class Favorite(Base):
     __tablename__ = "favorites"

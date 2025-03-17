@@ -13,8 +13,7 @@ def add_city(city:model.City) -> City:
     '''Adding city to database'''
     engine = get_engine()
 
-    _city = get_city(city.name)
-    if _city:
+    if check_city(city):
         raise CityAlreadyExistException(city.name)
     
     with Session(engine) as session:
@@ -25,6 +24,9 @@ def add_city(city:model.City) -> City:
         city_db = session.query(City).filter(City.name == city.name).first()
     return convert_city_to_model(city_db)
 
+def check_city(city:City) -> bool:
+    with Session(get_engine()) as session:
+        return bool(session.query(City).filter(City.name == city.name).first())
 
 def get_city(name:str) -> City | None:
     '''Get city by citi name'''
@@ -105,11 +107,22 @@ def check_user_password(user:User, password:str) -> bool:
                                             User.password == model.User.get_password_hash(password)).first()
         return bool(result)
 
+def change_user_password(user:User, new_password:str):
+    if not check_user(user.login):
+        raise UserNotFoundException(user.login)
+    
+    engine = get_engine()
+    with Session(engine) as session:
+        update_user = session.query(User).filter(User.login == user.login).first()
+        update_user.password = model.User.get_password_hash(new_password)
+
+        session.commit()
+
 def get_user(login:str) -> User:
     engine = get_engine()
 
     with Session(engine) as session:
-        user = session.query(User).filter(User.login == login).first()
+        user:User = session.query(User).filter(User.login == login).first()
 
     if not user:
         raise UserNotFoundException(user.login)
