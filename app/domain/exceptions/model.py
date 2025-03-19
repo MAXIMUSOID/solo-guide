@@ -104,8 +104,9 @@ class VisitEmptyUserException(BaseEntityException):
 class VisitEmptyShowPlaceException(BaseEntityException):
     @property
     def message(self):
-        return f"Для регистрации визита следует достопримечательность"
-    
+        return f"Для регистрации визита следует указать достопримечательность"
+
+
 @dataclass
 class VisitGradeIncorrectException(BaseEntityException):
     grade:int
@@ -114,6 +115,7 @@ class VisitGradeIncorrectException(BaseEntityException):
     def message(self):
         return f"Оценка {self.grade} выходит за рамки 0-5"
     
+
 @dataclass
 class VisitReviewToLongException(BaseEntityException):
     review:str
@@ -121,5 +123,19 @@ class VisitReviewToLongException(BaseEntityException):
     @property
     def message(self):
         return f"Слишком длинный обзор {self.review}"
+    
+    
+@dataclass
+class FavoriteEmptyUserException(BaseEntityException):
+    @property
+    def message(self):
+        return f"Для добавления в избранное следует указать пользователя"
+    
+
+@dataclass
+class FavoriteEmptyShowPlaceException(BaseEntityException):
+    @property
+    def message(self):
+        return f"Для добавления в избранное следует указать достопримечательность"
 
     

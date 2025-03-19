@@ -1,12 +1,12 @@
 import pytest
 
-from domain.entities.model import City, ShowPlace, User
+from domain.entities.model import City, ShowPlace, User, Visit
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.user import UserAlreadyExistException
-from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException
+from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException, VisitAlreadyExistException
 from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
-from infra.repository.entrypoint import add_city, add_show_place, add_user, change_user_password, check_user_password
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password
 
 
 _init_db(is_test=True)
@@ -29,7 +29,7 @@ def test_add_show_place():
     showplace = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
     _city = add_city(city)
     sp = add_show_place(showplace)
-    assert city == sp.city
+    assert city.is_generic_type() == sp.city.is_generic_type()
 
 def test_add_show_place_unique():
     clear_all()
@@ -51,7 +51,7 @@ def test_add_user():
     clear_all()
     user:User = User("MAX", "MAX")
     user_added = add_user(user, "12345")
-    assert user == user_added
+    assert user.is_generic_type() == user_added.is_generic_type()
 
 def test_add_unique_user():
     clear_all()
@@ -77,3 +77,38 @@ def test_change_password():
     change_user_password(user, "asd")
 
     assert check_user_password(user, "asd")
+
+def test_add_visit():
+    clear_all()
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+    user = User("Max", "max")
+    add_user(user, "111")
+    add_city(city)
+    add_show_place(show_place)
+    visit = Visit(
+        user=user,
+        show_place=show_place,
+        grade=5,
+        review="Хорошее место"
+    )
+    add_visit(visit=visit)
+
+
+def test_add_unique_visit():
+    clear_all()
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+    user = User("Max", "max")
+    add_user(user, "111")
+    add_city(city)
+    add_show_place(show_place)
+    visit = Visit(
+        user=user,
+        show_place=show_place,
+        grade=5,
+        review="Хорошее место"
+    )
+    with pytest.raises(VisitAlreadyExistException):
+        add_visit(visit=visit)
+        add_visit(visit=visit)

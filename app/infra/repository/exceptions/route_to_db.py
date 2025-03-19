@@ -44,3 +44,23 @@ class ShowPlaceAlreadyExistException(RepositoryException):
     @property
     def message(self):
         return f'Достопримечательность {self.show_place_name} уже есть в городе {self.city_name}'
+    
+
+@dataclass
+class VisitAlreadyExistException(RepositoryException):
+    show_place_name:str
+    user_login:str
+
+    @property
+    def message(self):
+        return f'Пользователь {self.user_login} посещали эту достопримечательность {self.show_place_name}'
+    
+
+@dataclass
+class VisitCreateException(RepositoryException):
+    show_place_name:str
+    user_login:str
+
+    @property
+    def message(self):
+        return f'Для пользователя {self.user_login} не удалось зарегестрировать посещение достопримечательности {self.show_place_name}'

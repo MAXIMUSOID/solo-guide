@@ -7,6 +7,8 @@ from domain.exceptions.model import (CityCountryToLongException,
                                      CityEmptyCountryException, 
                                      CityEmptyNameException, 
                                      CityNameToLongException, 
+                                     FavoriteEmptyShowPlaceException, 
+                                     FavoriteEmptyUserException, 
                                      PlaceTypeNotFoundException, 
                                      ShowPlaceEmptyNameException, 
                                      ShowPlaceNameToLongException, 
@@ -16,7 +18,8 @@ from domain.exceptions.model import (CityCountryToLongException,
                                      UserNicknameToLongException, 
                                      VisitEmptyShowPlaceException, 
                                      VisitEmptyUserException, 
-                                     VisitGradeIncorrectException, VisitReviewToLongException,
+                                     VisitGradeIncorrectException, 
+                                     VisitReviewToLongException,
                                      )
 from domain.entities.base import BaseValueObject
 from domain.entities.place_types import PlaceType
@@ -29,6 +32,7 @@ class Base(ABC):
 class User(BaseValueObject):
     nickname:str
     login:str
+    oid:int = field(default=None)
 
     def validate(self):
         if self.nickname == "":
@@ -55,7 +59,8 @@ class User(BaseValueObject):
 class City(BaseValueObject):
     name:str
     country:str
-
+    oid:int = field(default=None)
+    
     def validate(self):
         if self.name == "":
             raise CityEmptyNameException()
@@ -81,6 +86,7 @@ class ShowPlace(BaseValueObject):
     longitude:float
     city:City
     addres:str
+    oid:int = field(default=None)
 
     @property
     def place_type(self) -> PlaceType:
@@ -123,11 +129,12 @@ class Visit(BaseValueObject):
         if len(self.review) > 255:
             raise VisitReviewToLongException(self.review)
         
-
-
-        
     def is_generic_type(self):
         return f"{self.user.login}"
+
+@dataclass 
+class Visits(BaseValueObject):
+    visits_list:list[Visit] = field(default_factory=list)
 
 @dataclass
 class Favorite(BaseValueObject):
@@ -135,7 +142,10 @@ class Favorite(BaseValueObject):
     show_place:ShowPlace
 
     def validate(self):
-        ...
+        if self.user is None:
+            raise FavoriteEmptyUserException()
+        if self.show_place is None:
+            raise FavoriteEmptyShowPlaceException()
         
     def is_generic_type(self):
         return f"{self.user.login}"

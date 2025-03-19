@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
 
 from infra.repository.exceptions.user import UserAlreadyExistException, UserNotFoundException, UserCreateException
-from infra.repository.converter import convert_city_to_model, convert_show_place_to_model, convert_user_to_model
+from infra.repository.converter import convert_city_to_model, convert_show_place_to_model, convert_user_to_model, convert_visit_to_model
 from domain.entities.place_types import PlaceType
-from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException
+from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException, VisitAlreadyExistException, VisitCreateException
 import domain.entities.model as model
 from infra.repository.connect import get_engine
-from infra.repository.model import City, ShowPlace, User
+from infra.repository.model import City, ShowPlace, User, Visit
 
 
 def add_city(city:model.City) -> City:
@@ -75,6 +75,17 @@ def add_show_place(show_place:model.ShowPlace)->model.ShowPlace:
     return sp
 
 
+def _get_show_place(name:str, city_name:str) -> ShowPlace:
+    engine = get_engine()
+    if get_city(city_name) is None:
+        raise CityNotFoundException(city_name)
+    
+    with Session(engine) as session:
+        query = session.query(ShowPlace, City).join(City, ShowPlace.city_id == City.id).filter(ShowPlace.name == name, City.name == city_name).first()
+    
+    return query[0]
+
+
 def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     engine = get_engine()
     if get_city(city_name) is None:
@@ -127,6 +138,8 @@ def get_user(login:str) -> User:
     if not user:
         raise UserNotFoundException(user.login)
 
+    return user
+
 
 def add_user(user:model.User, password:str) -> model.User:
     if check_user(user.login):
@@ -148,4 +161,47 @@ def add_user(user:model.User, password:str) -> model.User:
             raise UserCreateException(user.login)
 
         return convert_user_to_model(user_db)
+    
+def get_visit(visit:model.Visit) -> Visit:
+    with Session(get_engine()) as session:
+        query = session.query(Visit, User, ShowPlace, City).join(
+            User, Visit.user_id == User.id).join(
+            ShowPlace, Visit.show_place_id == ShowPlace.id).join(
+                City, ShowPlace.city_id == City.id).filter(
+                Visit.user_id == visit.user.oid, Visit.show_place_id == visit.show_place.oid).first()
+    return query
+
+
+def check_unique_visit(visit:model.Visit) -> bool:
+    query = get_visit(visit=visit)    
+    return bool(query)
+
+def add_visit(visit:model.Visit):
+    user_model:model.User = convert_user_to_model(get_user(visit.user.login))
+    show_place_model:model.ShowPlace = get_show_place(visit.show_place.name, visit.show_place.city.name)
+    visit:model.Visit = model.Visit(
+        user=user_model,
+        show_place=show_place_model,
+        grade=visit.grade,
+        review=visit.review)
+    if check_unique_visit(visit=visit):
+        raise VisitAlreadyExistException(visit.show_place.name, visit.user.login)
+    
+    engine = get_engine()
+    with Session(engine) as session:
+        new_visit = Visit(
+            user_id = visit.user.oid,
+            show_place_id = visit.show_place.oid,
+            grade = visit.grade,
+            review = visit.review,
+            datetime=visit.create_at
+        )
+        session.add(new_visit)
+        session.commit()        
         
+    query = get_visit(visit)
+    test_visit:model.Visit = convert_visit_to_model(*query)
+    if test_visit is None:
+        raise VisitCreateException(visit.show_place.name, visit.user.login)
+    
+    return test_visit
