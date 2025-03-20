@@ -18,7 +18,7 @@ def convert_show_place_to_model(show_place:ShowPlace, city:City) -> model.ShowPl
         description=show_place.description, 
         latitude=show_place.latitude, 
         longitude=show_place.longitude,
-        city=city,
+        city=convert_city_to_model(city),
         addres=show_place.addres,
         oid=show_place.id
         )

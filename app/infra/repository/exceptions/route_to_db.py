@@ -20,6 +20,13 @@ class CityNotFoundException(RepositoryException):
     
 
 @dataclass
+class CitiesNotFoundException(RepositoryException):
+    @property
+    def message(self):
+        return f'Нет ни одного города'
+
+
+@dataclass
 class ShowPlaceAddingException(RepositoryException):
     show_place_name:str
 

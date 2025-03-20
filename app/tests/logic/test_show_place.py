@@ -3,10 +3,10 @@ import pytest
 from domain.entities.model import City, ShowPlace, User, Visit
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.user import UserAlreadyExistException
-from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException, VisitAlreadyExistException
+from infra.repository.exceptions.route_to_db import CitiesNotFoundException, CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException, ShowPlacesCityNotFoundException, VisitAlreadyExistException
 from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password, get_cities, get_show_places_by_city
 
 
 _init_db(is_test=True)
@@ -26,6 +26,29 @@ def test_add_unique_city():
     with pytest.raises(CityAlreadyExistException):
         add_city(city)
         add_city(city)
+
+def test_get_all_cities():
+    clear_all()
+    city = City(name="Сургут", country="Россия")
+    city_1 = City(name="Нефтеюганск", country="Россия")
+    add_city(city)
+    add_city(city_1)
+
+    cities = get_cities()
+    assert len(cities) == 2
+    assert cities[0].is_generic_type() == city.is_generic_type()
+    assert cities[1].is_generic_type() == city_1.is_generic_type()
+
+
+def test_get_all_cities_not_found():
+    clear_all()
+
+    with pytest.raises(CitiesNotFoundException):
+        cities = get_cities()
+    
+
+
+
 
 '''
 Создание достопримечательностей
@@ -53,6 +76,29 @@ def test_add_show_place_unnown_city():
         city=City("1", "1")
         showplace = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
         add_show_place(showplace)
+
+
+def test_get_show_places_by_city():
+    clear_all()
+    city = City(name="Сургут", country="Россия")
+    showplace = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
+    showplace_1 = ShowPlace(name="ГРЭС_1", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
+    _city = add_city(city)
+    sp = add_show_place(showplace)
+    sp_1 = add_show_place(showplace_1)
+
+    result:list[ShowPlace] = get_show_places_by_city(city_name=city.name)
+    assert len(result) == 2
+    assert result[0].is_generic_type() == sp.is_generic_type()
+    assert result[1].is_generic_type() == sp_1.is_generic_type()
+
+
+def test_get_show_places_by_city_by_not_show_place():
+    clear_all()
+    city = City(name="Сургут", country="Россия")
+    _city = add_city(city)
+    with pytest.raises(ShowPlacesCityNotFoundException):
+        result:list[ShowPlace] = get_show_places_by_city(city_name=city.name)
 
 
 '''

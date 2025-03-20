@@ -14,9 +14,9 @@ from application.api.messages.shemas import (CreateCityRequestShema,
                                              CreateUserRequestSchema, 
                                              CreateUserResponceSchema, 
                                              CreateVisitRequestSchema, 
-                                             CreateVisitResponceSchema,
+                                             CreateVisitResponceSchema, GetShowPlacesToCityRequestSchema, GetShowPlacesToCityResponceSchema,
                                              )
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_city, get_show_place, get_user_to_model
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_city, get_show_place, get_show_places_by_city, get_user_to_model
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
@@ -37,11 +37,29 @@ async def create_city_handler(schema: CreateCityRequestShema):
     '''Создать новый город'''
     try:
         _city = City(name=schema.name, country=schema.country)
-        city = convert_city_to_model(add_city(_city))
+        city = add_city(_city)
     except RepositoryException as exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
     return CreateCityResponceShema.from_entity(city)
 
+
+@router.get(
+        '/{city_name}/show_places',
+        response_model=GetShowPlacesToCityResponceSchema,
+        status_code=status.HTTP_200_OK,
+        description="Получение всех достопримечательностей города",
+        responses={
+            status.HTTP_200_OK: {'model': GetShowPlacesToCityResponceSchema}
+        }
+)
+async def get_city_show_places_handler(city_name:str):
+    try:
+        show_places:list[ShowPlace] = get_show_places_by_city(city_name)
+    except RepositoryException as exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'error': exception.message})
+    except BaseEntityException as exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'error': exception.message})
+    return GetShowPlacesToCityResponceSchema(show_places=show_places)
 
 @router_showplace.post(
     '/add', 

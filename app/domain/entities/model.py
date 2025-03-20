@@ -109,7 +109,7 @@ class ShowPlace(BaseValueObject):
         
         
     def is_generic_type(self):
-        return self.name
+        return f"{self.name}, {self.city.name}"
 
 @dataclass
 class Visit(BaseValueObject):

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from infra.repository.exceptions.user import UserAlreadyExistException, UserNotFoundException, UserCreateException
 from infra.repository.converter import convert_city_to_model, convert_show_place_to_model, convert_user_to_model, convert_visit_to_model
 from domain.entities.place_types import PlaceType
-from infra.repository.exceptions.route_to_db import CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException, VisitAlreadyExistException, VisitCreateException
+from infra.repository.exceptions.route_to_db import CitiesNotFoundException, CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException, ShowPlacesCityNotFoundException, VisitAlreadyExistException, VisitCreateException
 import domain.entities.model as model
 from infra.repository.connect import get_engine
 from infra.repository.model import City, ShowPlace, User, Visit
@@ -38,6 +38,17 @@ def get_city(name:str) -> City | None:
         return None
     
     return city
+
+def get_cities() -> list[model.City]:
+    engine = get_engine()
+
+    with Session(engine) as session:
+        query = session.query(City).all()
+
+    if len(query) == 0:
+        raise CitiesNotFoundException()
+    
+    return list(map(convert_city_to_model, query))
 
 
 def add_show_place(show_place:model.ShowPlace)->model.ShowPlace:
@@ -97,8 +108,25 @@ def get_show_place(name:str, city_name:str) -> model.ShowPlace:
     if query is None:
         raise ShowPlaceNotFoundException(show_place_name=name, city_name=city_name)
 
-    return convert_show_place_to_model(query[0], convert_city_to_model(query[1]))
+    return convert_show_place_to_model(query[0], query[1])
 
+
+def get_show_places_by_city(city_name:str) -> list[model.ShowPlace]:
+    engine = get_engine()
+    if get_city(city_name) is None:
+        raise CityNotFoundException(city_name)
+    
+    with Session(engine) as session:
+        query = session.query(ShowPlace, City).join(City, ShowPlace.city_id == City.id).filter(City.name == city_name).all()
+    
+    if not query:
+        raise ShowPlacesCityNotFoundException(city_name)
+    
+    result = [convert_show_place_to_model(show_place, city) for show_place, city in query]
+
+    return result
+    
+    
 
 def check_user(login:str) -> bool:
     engine = get_engine()
@@ -134,7 +162,6 @@ def get_user(login:str) -> User:
 
     with Session(engine) as session:
         user:User = session.query(User).filter(User.login == login).first()
-
     if not user:
         raise UserNotFoundException(login)
 

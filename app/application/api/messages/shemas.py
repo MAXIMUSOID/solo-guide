@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from pydantic import BaseModel
 
 from domain.entities.model import City, ShowPlace, User, Visit
@@ -49,6 +50,19 @@ class CreateShowPlaceResponceShema(BaseModel):
             city=showplace.city
         )
     
+
+class GetShowPlacesToCityRequestSchema(BaseModel):
+    city_name:str
+    
+
+class GetShowPlacesToCityResponceSchema(BaseModel):
+    show_places:List[ShowPlace]
+
+    @classmethod
+    def from_entity(cls, show_places:list[ShowPlace]) -> 'GetShowPlacesToCityResponceSchema':
+        return GetShowPlacesToCityResponceSchema(
+            show_places=show_places
+        )
 
 class CreateUserRequestSchema(BaseModel):
     nickname:str
