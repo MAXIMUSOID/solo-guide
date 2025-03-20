@@ -21,6 +21,15 @@ class CreateCityResponceShema(BaseModel):
             country=city.country
         )
     
+class GetAllCitiesResponceSchema(BaseModel):
+    cities:list[City]
+
+    @classmethod
+    def from_entity(cls, cities:list[City]) -> 'GetAllCitiesResponceSchema':
+        return GetAllCitiesResponceSchema(
+            cities=cities
+        )
+    
 
 class CreateShowPlaceRequestShema(BaseModel):
     name:str

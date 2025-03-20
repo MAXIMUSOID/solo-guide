@@ -14,9 +14,9 @@ from application.api.messages.shemas import (CreateCityRequestShema,
                                              CreateUserRequestSchema, 
                                              CreateUserResponceSchema, 
                                              CreateVisitRequestSchema, 
-                                             CreateVisitResponceSchema, GetShowPlacesToCityRequestSchema, GetShowPlacesToCityResponceSchema,
+                                             CreateVisitResponceSchema, GetAllCitiesResponceSchema, GetShowPlacesToCityRequestSchema, GetShowPlacesToCityResponceSchema,
                                              )
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_city, get_show_place, get_show_places_by_city, get_user_to_model
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_to_model
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
@@ -60,6 +60,25 @@ async def get_city_show_places_handler(city_name:str):
     except BaseEntityException as exception:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'error': exception.message})
     return GetShowPlacesToCityResponceSchema(show_places=show_places)
+
+
+@router.get(
+    '/all',
+    response_model=GetAllCitiesResponceSchema,
+    status_code=status.HTTP_200_OK,
+    description="Получение всех городов",
+    responses={
+        status.HTTP_200_OK: {'model': GetAllCitiesResponceSchema}
+    }
+)
+async def get_all_cities_handler():
+    try:
+        cities = get_cities()
+    except RepositoryException as exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'error': exception.message})
+    except BaseEntityException as exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'error': exception.message})
+    return GetAllCitiesResponceSchema(cities=cities)
 
 @router_showplace.post(
     '/add', 
