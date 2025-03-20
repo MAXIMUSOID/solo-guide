@@ -37,6 +37,15 @@ class ShowPlaceNotFoundException(RepositoryException):
         return f'Достопримечательность {self.show_place_name} не найдена в городе {self.city_name}'
     
 @dataclass
+class ShowPlacesCityNotFoundException(RepositoryException):
+    city_name:str
+
+    @property
+    def message(self):
+        return f'Достопримечательности не найдены в городе {self.city_name}'
+    
+    
+@dataclass
 class ShowPlaceAlreadyExistException(RepositoryException):
     show_place_name:str
     city_name:str
@@ -53,7 +62,7 @@ class VisitAlreadyExistException(RepositoryException):
 
     @property
     def message(self):
-        return f'Пользователь {self.user_login} посещали эту достопримечательность {self.show_place_name}'
+        return f'Пользователь {self.user_login} уже посещал достопримечательность {self.show_place_name}'
     
 
 @dataclass

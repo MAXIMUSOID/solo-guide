@@ -136,9 +136,12 @@ def get_user(login:str) -> User:
         user:User = session.query(User).filter(User.login == login).first()
 
     if not user:
-        raise UserNotFoundException(user.login)
+        raise UserNotFoundException(login)
 
     return user
+
+def get_user_to_model(login:str):
+    return convert_user_to_model(get_user(login=login))
 
 
 def add_user(user:model.User, password:str) -> model.User:
@@ -176,14 +179,14 @@ def check_unique_visit(visit:model.Visit) -> bool:
     query = get_visit(visit=visit)    
     return bool(query)
 
-def add_visit(visit:model.Visit):
-    user_model:model.User = convert_user_to_model(get_user(visit.user.login))
-    show_place_model:model.ShowPlace = get_show_place(visit.show_place.name, visit.show_place.city.name)
+def add_visit(user_login:str, show_place_name:str, show_place_city:str, grade:int, review:str):
+    user_model:model.User = get_user_to_model(user_login)
+    show_place_model:model.ShowPlace = get_show_place(show_place_name, show_place_city)
     visit:model.Visit = model.Visit(
         user=user_model,
         show_place=show_place_model,
-        grade=visit.grade,
-        review=visit.review)
+        grade=grade,
+        review=review)
     if check_unique_visit(visit=visit):
         raise VisitAlreadyExistException(visit.show_place.name, visit.user.login)
     

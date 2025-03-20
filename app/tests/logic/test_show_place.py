@@ -10,6 +10,10 @@ from infra.repository.entrypoint import add_city, add_show_place, add_user, add_
 
 
 _init_db(is_test=True)
+
+'''
+Создание городов
+'''
 def test_add_city():
     clear_all()
     city = City(name="Сургут", country="Россия")
@@ -23,6 +27,9 @@ def test_add_unique_city():
         add_city(city)
         add_city(city)
 
+'''
+Создание достопримечательностей
+'''
 def test_add_show_place():
     clear_all()
     city = City(name="Сургут", country="Россия")
@@ -47,11 +54,16 @@ def test_add_show_place_unnown_city():
         showplace = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
         add_show_place(showplace)
 
+
+'''
+Создание и редактирование пользователя
+'''
 def test_add_user():
     clear_all()
     user:User = User("MAX", "MAX")
     user_added = add_user(user, "12345")
     assert user.is_generic_type() == user_added.is_generic_type()
+
 
 def test_add_unique_user():
     clear_all()
@@ -68,6 +80,7 @@ def test_check_password():
 
     assert check_user_password(user_added, "12345")
 
+
 def test_change_password():
     clear_all()
     user:User = User(nickname="MAX", login="MAX")
@@ -78,6 +91,10 @@ def test_change_password():
 
     assert check_user_password(user, "asd")
 
+
+'''
+Создание посещения достопримечательности пользователем
+'''
 def test_add_visit():
     clear_all()
     city = City("Сургут", "Россия")
@@ -86,13 +103,11 @@ def test_add_visit():
     add_user(user, "111")
     add_city(city)
     add_show_place(show_place)
-    visit = Visit(
-        user=user,
-        show_place=show_place,
-        grade=5,
-        review="Хорошее место"
-    )
-    add_visit(visit=visit)
+    add_visit(user_login=user.login, 
+              show_place_name=show_place.name, 
+              show_place_city=show_place.city.name,
+              grade=5,
+              review="Хорошее место")
 
 
 def test_add_unique_visit():
@@ -110,5 +125,13 @@ def test_add_unique_visit():
         review="Хорошее место"
     )
     with pytest.raises(VisitAlreadyExistException):
-        add_visit(visit=visit)
-        add_visit(visit=visit)
+        add_visit(user_login=user.login, 
+              show_place_name=show_place.name, 
+              show_place_city=show_place.city.name,
+              grade=5,
+              review="Хорошее место")
+        add_visit(user_login=user.login, 
+              show_place_name=show_place.name, 
+              show_place_city=show_place.city.name,
+              grade=5,
+              review="Хорошее место")

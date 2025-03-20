@@ -111,7 +111,7 @@ def test_add_visit():
 
 def test_visit_empty_user():
     city = City("Сургут", "Россия")
-    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+    show_place = ShowPlace(name="ГРЭС", _place_type="Архитектурный", description="", latitude=0, longitude=0, city=city, addres="")
 
     with pytest.raises(VisitEmptyUserException):
         visit = Visit(
