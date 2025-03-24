@@ -7,6 +7,8 @@ from application.api.messages.handlers import router as city
 from application.api.messages.handlers import router_showplace as show_place
 from application.api.messages.handlers import router_user as user
 from application.api.messages.handlers import router_visit as visit
+
+
 _init_db()
 
 def create_app() -> FastAPI:

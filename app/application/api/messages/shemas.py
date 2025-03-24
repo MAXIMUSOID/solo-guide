@@ -92,6 +92,25 @@ class CreateUserResponceSchema(BaseModel):
             oid=user.oid
         )
     
+class LoginUserRequestSchema(BaseModel):
+    login:str
+    password:str
+
+
+class LoginUserResponceShcema(BaseModel):
+    nickname:str
+    login:str
+    oid:int
+    token:str
+
+    @classmethod
+    def from_entity(cls, user: User, token:str) -> 'LoginUserResponceShcema':
+        return LoginUserResponceShcema(
+            nickname=user.nickname,
+            login=user.login,
+            oid=user.oid,
+            token=token
+        )
 
 
 class CreateVisitRequestSchema(BaseModel):

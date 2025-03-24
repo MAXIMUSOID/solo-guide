@@ -12,6 +12,13 @@ class UserNotFoundException(RepositoryException):
         return f'Пользователь с таким логином {self.login} не найден'
     
 @dataclass
+class IncorrectUserPassword(RepositoryException):
+
+    @property
+    def message(self):
+        return f'Неверный пароль пользователя'
+
+@dataclass
 class UserAlreadyExistException(RepositoryException):
     login:str
 
