@@ -1,7 +1,10 @@
+from authx import RequestToken
 from fastapi import Depends, status
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 from fastapi.routing import APIRouter
 
+from application.api.messages.auth import config
+from application.api.messages.auth import SECURITY
 from domain.exceptions.base import BaseEntityException
 from domain.entities.model import City, ShowPlace, User, Visit
 from infra.repository.converter import convert_city_to_model
@@ -14,9 +17,14 @@ from application.api.messages.shemas import (CreateCityRequestShema,
                                              CreateUserRequestSchema, 
                                              CreateUserResponceSchema, 
                                              CreateVisitRequestSchema, 
-                                             CreateVisitResponceSchema, GetAllCitiesResponceSchema, GetShowPlacesToCityRequestSchema, GetShowPlacesToCityResponceSchema,
+                                             CreateVisitResponceSchema, 
+                                             GetAllCitiesResponceSchema, 
+                                             GetShowPlacesToCityRequestSchema, 
+                                             GetShowPlacesToCityResponceSchema, 
+                                             LoginUserRequestSchema, 
+                                             LoginUserResponceShcema,
                                              )
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_to_model
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_to_model, login_user
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
@@ -132,19 +140,48 @@ async def create_user(schema:CreateUserRequestSchema):
     
     return CreateUserResponceSchema.from_entity(user)
 
+@router_user.post(
+    '/login',
+    response_model=LoginUserResponceShcema,
+    status_code=status.HTTP_200_OK,
+    description='Эндпоинт вход пользователя пользователя',
+    responses={
+        status.HTTP_201_CREATED: {'model': LoginUserResponceShcema}
+    })
+async def login_user_handler(schema:LoginUserRequestSchema, responce: Response):
+    '''
+    Создать нового пользователя
+    '''
+    try:
+        user:User = login_user(user_login=schema.login, password=schema.password)
+        token = SECURITY.create_access_token(uid=str(user.oid))
+        responce.set_cookie(config.JWT_ACCESS_COOKIE_NAME, token)
+    except RepositoryException as exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': exception.message})
+    except BaseEntityException as exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': exception.message})
+    
+    
+    return LoginUserResponceShcema.from_entity(user=user, token=token)
+
 
 @router_visit.post(
     '/add',
+    dependencies=[Depends(SECURITY.get_token_from_request)],
     response_model=CreateVisitResponceSchema,
     status_code=status.HTTP_201_CREATED,
     description='Эндпоинт создаёт новое посещение пользователем достопримечательности',
     responses={
         status.HTTP_201_CREATED: {'model': CreateVisitResponceSchema}
     })
-async def create_visit(schema:CreateVisitRequestSchema):
+async def create_visit(schema:CreateVisitRequestSchema, token:RequestToken = Depends()):
     '''
     Создать нового пользователя
     '''
+    try:
+        SECURITY.verify_token(token=token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': 'Требуется вход'})
     try:
         visit:Visit = add_visit(
             user_login=schema.user_login,
@@ -157,5 +194,5 @@ async def create_visit(schema:CreateVisitRequestSchema):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
     except BaseEntityException as exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
-    
+
     return CreateVisitResponceSchema.from_entity(visit=visit)

@@ -2,11 +2,11 @@ import pytest
 
 from domain.entities.model import City, ShowPlace, User, Visit
 from domain.entities.place_types import PlaceType
-from infra.repository.exceptions.user import UserAlreadyExistException
+from infra.repository.exceptions.user import IncorrectUserPassword, UserAlreadyExistException, UserNotFoundException
 from infra.repository.exceptions.route_to_db import CitiesNotFoundException, CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException, ShowPlacesCityNotFoundException, VisitAlreadyExistException
 from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password, get_cities, get_show_places_by_city
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password, get_cities, get_show_places_by_city, login_user
 
 
 _init_db(is_test=True)
@@ -133,6 +133,28 @@ def test_change_password():
     change_user_password(user, "asd")
 
     assert check_user_password(user, "asd")
+
+def test_login_user():
+    clear_all()
+    user:User = User(nickname="MAX", login="MAX")
+    user_added = add_user(user, "12345")
+
+    user_db = login_user("MAX", "12345")
+    assert user.is_generic_type() == user_db.is_generic_type()
+
+def test_login_user_incorrect_password():
+    clear_all()
+    user:User = User(nickname="MAX", login="MAX")
+    user_added = add_user(user, "12345")
+    with pytest.raises(IncorrectUserPassword):
+        user = login_user("MAX", "1234")
+
+def test_login_user_incorrect_login():
+    clear_all()
+    user:User = User(nickname="MAX", login="MAX")
+    user_added = add_user(user, "12345")
+    with pytest.raises(UserNotFoundException):
+        user = login_user("MAX1", "12345")
 
 
 '''

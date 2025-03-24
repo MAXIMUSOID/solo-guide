@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from infra.repository.exceptions.user import UserAlreadyExistException, UserNotFoundException, UserCreateException
+from infra.repository.exceptions.user import IncorrectUserPassword, UserAlreadyExistException, UserNotFoundException, UserCreateException
 from infra.repository.converter import convert_city_to_model, convert_show_place_to_model, convert_user_to_model, convert_visit_to_model
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.route_to_db import CitiesNotFoundException, CityAlreadyExistException, CityNotFoundException, ShowPlaceAddingException, ShowPlaceAlreadyExistException, ShowPlaceNotFoundException, ShowPlacesCityNotFoundException, VisitAlreadyExistException, VisitCreateException
@@ -235,3 +235,10 @@ def add_visit(user_login:str, show_place_name:str, show_place_city:str, grade:in
         raise VisitCreateException(visit.show_place.name, visit.user.login)
     
     return test_visit
+
+def login_user(user_login:str, password:str) -> model.User:
+    user:User = get_user(login=user_login)
+    if not check_user_password(user, password):
+        raise IncorrectUserPassword()
+    
+    return convert_user_to_model(user)
