@@ -16,7 +16,7 @@
    git clone https://github.com/your_username/your_repository.git
    cd your_repository
 
-2. Install all required packages in `Requirements` section.
+2. Установить все `Зависимости`.
 
 
 ### Основные команды
