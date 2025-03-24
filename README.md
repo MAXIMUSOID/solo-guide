@@ -1,16 +1,16 @@
-# Solo Guide Application FastAPI + Kafka DDD chat Application w\ PostgreSQL
+# Solo Guide Приложение
 
-This is a basic template for FastAPI projects configured to use Docker Compose, Makefile, and PostgreSQL.
+Приложение для регистрации достопримечательностей города и отметок об их посещении
 
-## Requirements
+## Зависимости
 
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [GNU Make](https://www.gnu.org/software/make/)
 
-## How to Use
+## Как установить
 
-1. **Clone the repository:**
+1. **Склонировать репозиторий на свой компьютер:**
 
    ```bash
    git clone https://github.com/your_username/your_repository.git
@@ -19,9 +19,9 @@ This is a basic template for FastAPI projects configured to use Docker Compose, 
 2. Install all required packages in `Requirements` section.
 
 
-### Implemented Commands
+### Основные команды
 
-* `make app` - up application and database/infrastructure
-* `make app-logs` - follow the logs in app container
-* `make app-down` - down application and all infrastructure
-* `make pytest` - test application with pytest
+* `make app` - запуск контейнеров с приложением и базой данных
+* `make app-logs` - отображение логов работы приложения
+* `make app-down` - выключение контейнеров
+* `make pytest` - тестирование приложения с использованием pytest

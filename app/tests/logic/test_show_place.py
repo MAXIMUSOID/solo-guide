@@ -47,9 +47,6 @@ def test_get_all_cities_not_found():
         cities = get_cities()
     
 
-
-
-
 '''
 Создание достопримечательностей
 '''
