@@ -14,6 +14,9 @@ psycopg2 = "^2.9.10"
 uvicorn = "^0.34.0"
 pytest = "^8.3.5"
 authx = "^1.4.1"
+flet = "^0.27.6"
+flet-web = "^0.27.6"
+requests = "^2.32.3"
 
 
 [build-system]
