@@ -84,7 +84,13 @@ def get_get_all_showplace(page:ft.Page):
         page.go("/")
 
     city_name = ft.TextField(label="Название города")
-    
+
+    dlg_modal:ft.AlertDialog = ft.AlertDialog(
+        title=ft.Text(""),
+    )
+
+    # page.add(dlg_modal)
+
 
     content = ft.Container(
         content=ft.Column(
@@ -93,8 +99,15 @@ def get_get_all_showplace(page:ft.Page):
     )
 
     def get_show_place(e):
-        result:dict = requests.get(f"http://0.0.0.0:8000/city/{city_name.value}/show_places").json()
-        
+        try:
+            responce = requests.get(f"http://0.0.0.0:8000/city/{city_name.value}/show_places")
+            result:dict = responce.json()
+            responce.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            dlg_modal.title.value = str(result)
+            dlg_modal.update()
+            page.open(dlg_modal)
+            return
         # raise ValueError(str(result))
         show_places:list = result["show_places"]
         show_places_controls:list = []
@@ -117,6 +130,7 @@ def get_get_all_showplace(page:ft.Page):
     return ft.Container(
             content=ft.Column(
                 controls=[
+                    dlg_modal,
                     ft.TextButton("Выйти", on_click=exit),
                     city_name,
                     ft.Button("Найти", on_click=get_show_place),
