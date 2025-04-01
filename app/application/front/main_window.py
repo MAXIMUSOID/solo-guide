@@ -25,8 +25,8 @@ async def lifespan(app: FastAPI):
 
 def get_login_window(page:ft.Page):
     rst = ft.Text("Войдите в систему под своим профилем")
-    login_field = ft.TextField(label="Логин", value="Test", width=500)
-    password_field = ft.TextField(label="Пароль", password=True, value="test", width=500)
+    login_field = ft.TextField(label="Логин", value="Test", width=1500)
+    password_field = ft.TextField(label="Пароль", password=True, value="test", width=1500)
 
     def login(e):
         
@@ -159,6 +159,7 @@ def get_user_home_page(page:ft.Page):
             controls=[
                 ft.Row(
                     controls=[
+                        ft.Text(user.nickname),
                         ft.TextButton("Выйти", on_click=exit)
                     ],
                     alignment=ft.MainAxisAlignment.END
@@ -178,13 +179,59 @@ def get_get_all_showplace(page:ft.Page):
         user.clear()
         page.go("/")
 
-    city_name = ft.TextField(label="Название города")
-
-    dlg_modal:ft.AlertDialog = ft.AlertDialog(
+    dlg:ft.AlertDialog = ft.AlertDialog(
         title=ft.Text(""),
     )
 
-    # page.add(dlg_modal)
+    city_name = ft.TextField(label="Название города")
+
+    grade_field = ft.TextField("Оценка")
+    review_field = ft.TextField("Отзыв")
+
+    def create_review(e:ft.TapEvent):
+        # raise ValueError(e.control.data)
+        add_review(show_place_name=e.control.data["show_place_name"], show_place_city_name=e.control.data["show_place_city"])
+
+    def add_review(show_place_name, show_place_city_name):
+        data = {
+            "user_login": user.login,
+            "show_place_name": show_place_name,
+            "show_place_city": show_place_city_name,
+            "grade": grade_field.value,
+            "review": review_field.value,
+        }
+        try:
+            responce = requests.post("http://0.0.0.0:8000/visit/add/", data=json.dumps(data), headers={'Content-Type': 'application/json' }, params={"location":"headers", "token":user.token})
+            result = responce.json() 
+            responce.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            page.close(review_dialog)
+            # raise ValueError(result)
+            dlg.title.value = str(result["detail"]["error"])
+            dlg.update()
+            page.open(dlg)
+            return
+        
+        dlg.title.value = "Отзыв зарегистрирован"
+        dlg.update()
+        page.open(dlg)
+        ...
+
+    review_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Оставьте свой отзыв"),
+        content=ft.Column(
+            controls=[
+                grade_field,
+                review_field
+            ],
+        ),
+        actions=[
+            ft.Button("Оставить отзыв", on_click=create_review)
+        ]
+    )
+
+
 
 
     content = ft.Container(
@@ -193,6 +240,12 @@ def get_get_all_showplace(page:ft.Page):
         )
     )
 
+    def open_review_dialog(e:ft.ControlEvent):
+        # raise ValueError(e.control.data)
+        review_dialog.actions[0].data = e.control.data
+        review_dialog.update()
+        page.open(review_dialog)
+        ...
 
     def get_show_place(e):
         try:
@@ -201,15 +254,19 @@ def get_get_all_showplace(page:ft.Page):
             responce.raise_for_status()
             
         except requests.exceptions.HTTPError as errh:
-            dlg_modal.title.value = str(result)
-            dlg_modal.update()
-            page.open(dlg_modal)
+            dlg.title.value = str(result)
+            dlg.update()
+            page.open(dlg)
             return
         # raise ValueError(str(result))
         show_places:list = result["show_places"]
         show_places_controls:list = []
 
         for show_place in show_places:
+            data={
+                "show_place_name":show_place["name"],
+                "show_place_city":show_place["city"]["name"], 
+                }
             show_places_controls.append(
                 ft.Row(
                     controls=
@@ -217,6 +274,7 @@ def get_get_all_showplace(page:ft.Page):
                         ft.Text(show_place["name"], size=25),
                         ft.Text(show_place["description"], size=25),
                         ft.Text(show_place["addres"], size=25),
+                        ft.Button("Оценить", data=data, on_click=open_review_dialog)
                     ],
                 )
             )    
@@ -229,11 +287,13 @@ def get_get_all_showplace(page:ft.Page):
                 controls=[
                     ft.Row(
                     controls=[
+                        ft.Text(user.nickname),
                         ft.TextButton("Выйти", on_click=exit)
                     ],
                     alignment=ft.MainAxisAlignment.END
                     ),
-                    dlg_modal,
+                    dlg,
+                    review_dialog,
                     city_name,
                     ft.Button("Найти", on_click=get_show_place),
                     content,
@@ -332,6 +392,7 @@ def add_show_place(page: ft.Page):
             controls=[
                 ft.Row(
                     controls=[
+                        ft.Text(user.nickname),
                         ft.TextButton("Выйти", on_click=exit)
                     ],
                     alignment=ft.MainAxisAlignment.END
