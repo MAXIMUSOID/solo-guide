@@ -153,7 +153,29 @@ def get_user_home_page(page:ft.Page):
         user.clear()
         page.go("/")
 
-    
+    data = {
+        "user_login":user.login
+    }
+    history_data = ft.Column(
+        controls=[]
+    )
+    try:
+        responce = requests.post("http://0.0.0.0:8000/user/history/", data=json.dumps(data), headers={'Content-Type': 'application/json' }, params={"location":"headers", "token":user.token})
+        result = responce.json()
+        responce.raise_for_status()
+        
+    except requests.exceptions.HTTPError:
+        ...
+    for i in result["visits"]:
+        history_data.controls.append(
+            ft.Row(
+                controls=[
+                    ft.Text(i["show_place"]["name"]),
+                    ft.Text(i["show_place"]["city"]["name"]),
+                    ft.Text(i["review"])
+                ]
+            )
+        )
     
     return ft.Container(
         content=ft.Column(
@@ -166,7 +188,8 @@ def get_user_home_page(page:ft.Page):
                     alignment=ft.MainAxisAlignment.END
                 ),
                 ft.TextButton("Найти достопримечательность", on_click= lambda _: page.go("/watch_showplace")),
-                ft.TextButton("Добавить достопримечательность", on_click= lambda _: page.go("/add_showplace"))
+                ft.TextButton("Добавить достопримечательность", on_click= lambda _: page.go("/add_showplace")),
+                history_data
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
