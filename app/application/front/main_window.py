@@ -6,6 +6,7 @@ import json
 
 from fastapi import FastAPI
 import flet as ft
+import flet.map as map
 import flet.fastapi as flet_fastapi
 
 from domain.entities.place_types import PlaceType
@@ -24,8 +25,8 @@ async def lifespan(app: FastAPI):
 
 def get_login_window(page:ft.Page):
     rst = ft.Text("Войдите в систему под своим профилем")
-    login_field = ft.TextField(label="Логин", value="Test")
-    password_field = ft.TextField(label="Пароль", password=True, value="test")
+    login_field = ft.TextField(label="Логин", value="Test", width=500)
+    password_field = ft.TextField(label="Пароль", password=True, value="test", width=500)
 
     def login(e):
         
@@ -46,19 +47,26 @@ def get_login_window(page:ft.Page):
             page.go("/user")
         
     
-    return ft.Container(
-        content=ft.Column(
+    return ft.Column(
+            expand=True,
             controls=[
-                rst,
-                login_field,
-                password_field,
-                ft.TextButton("Войти", on_click=login)
-            ]
-        ),
-        margin=10,
-        width= 500,
-
-    )
+                ft.Column(
+                    expand=True,
+                    controls=[
+                        rst,
+                        login_field,
+                        password_field,
+                        ft.TextButton("Войти", on_click=login),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER
+                    ),
+                
+                
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER
+        )
 
 def get_user_home_page(page:ft.Page):
     if user.token == "":
@@ -106,6 +114,7 @@ def get_get_all_showplace(page:ft.Page):
             controls=[]
         )
     )
+
 
     def get_show_place(e):
         try:
