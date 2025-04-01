@@ -6,7 +6,7 @@ from infra.repository.exceptions.user import IncorrectUserPassword, UserAlreadyE
 from infra.repository.exceptions.route_to_db import CitiesNotFoundException, CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException, ShowPlacesCityNotFoundException, VisitAlreadyExistException
 from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password, get_cities, get_show_places_by_city, login_user
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password, get_cities, get_show_places_by_city, get_user_history, login_user
 
 
 _init_db(is_test=True)
@@ -200,3 +200,32 @@ def test_add_unique_visit():
               show_place_city=show_place.city.name,
               grade=5,
               review="Хорошее место")
+        
+
+
+def test_get_user_history():
+    clear_all()
+    city = City("Сургут", "Россия")
+    show_place = ShowPlace("ГРЭС", "Архитектурный", "", 0, 0, city, "")
+    user = User("Max", "max")
+    add_city(city)
+    add_show_place(show_place)
+    add_user(user, "111")
+    visit = add_visit(user_login=user.login, 
+              show_place_name=show_place.name, 
+              show_place_city=show_place.city.name,
+              grade=5,
+              review="Хорошее место")
+    
+    user = User("Max1", "max1")
+    add_user(user, "111")
+    
+    visit = add_visit(user_login=user.login, 
+              show_place_name=show_place.name, 
+              show_place_city=show_place.city.name,
+              grade=5,
+              review="Хорошее место")
+    
+    result = get_user_history(user.login)
+    assert len(result) == 1
+    assert result[0].is_generic_type() == visit.is_generic_type()

@@ -138,3 +138,15 @@ class CreateVisitResponceSchema(BaseModel):
             review=visit.review,
             created_at=visit.create_at
         )
+
+class GetUserHistoryRequestSchema(BaseModel):
+    user_login:str
+
+class GetUserHistoryResponceSchema(BaseModel):
+    visits:list[Visit]
+
+    @classmethod
+    def from_entity(cls, visits:list[Visit]) -> 'GetUserHistoryResponceSchema':
+        return GetUserHistoryResponceSchema(
+            visits=visits
+        )

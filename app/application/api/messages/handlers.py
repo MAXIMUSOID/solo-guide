@@ -20,11 +20,11 @@ from application.api.messages.shemas import (CreateCityRequestShema,
                                              CreateVisitResponceSchema, 
                                              GetAllCitiesResponceSchema, 
                                              GetShowPlacesToCityRequestSchema, 
-                                             GetShowPlacesToCityResponceSchema, 
+                                             GetShowPlacesToCityResponceSchema, GetUserHistoryRequestSchema, GetUserHistoryResponceSchema, 
                                              LoginUserRequestSchema, 
                                              LoginUserResponceShcema,
                                              )
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_to_model, login_user
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_history, get_user_to_model, login_user
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
@@ -169,6 +169,31 @@ async def login_user_handler(schema:LoginUserRequestSchema, responce: Response):
     
     return LoginUserResponceShcema.from_entity(user=user, token=token)
 
+@router_user.post(
+        '/history',
+        dependencies=[Depends(SECURITY.get_token_from_request)],
+        response_model=GetUserHistoryResponceSchema,
+        status_code=status.HTTP_200_OK,
+        description='Эндпоинт для получения истории пользователя',
+        responses={
+            status.HTTP_200_OK: {'model': GetUserHistoryResponceSchema}
+        })
+async def get_user_history_handler(schema: GetUserHistoryRequestSchema, token:RequestToken = Depends()):
+    '''
+    Получить историю пользователя
+    '''
+    try:
+        SECURITY.verify_token(token=token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': 'Требуется вход'})
+    try:
+        history_visit = get_user_history(schema.user_login)
+    except RepositoryException as exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': exception.message})
+    except BaseEntityException as exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': exception.message})
+    
+    return GetUserHistoryResponceSchema.from_entity(history_visit)
 
 @router_visit.post(
     '/add',

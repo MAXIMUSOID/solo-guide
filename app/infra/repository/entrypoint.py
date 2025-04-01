@@ -236,6 +236,19 @@ def add_visit(user_login:str, show_place_name:str, show_place_city:str, grade:in
     
     return test_visit
 
+def get_user_history(user_login:str) -> list[model.Visit]:
+    user = get_user(user_login)
+    
+    with Session(get_engine()) as session:
+        query = session.query(Visit, User, ShowPlace, City).join(
+            User, Visit.user_id == User.id).join(
+            ShowPlace, Visit.show_place_id == ShowPlace.id).join(
+                City, ShowPlace.city_id == City.id).filter(Visit.user_id == user.id).all()
+    
+    result = [convert_visit_to_model(*visit) for visit in query]
+    return result
+
+
 def login_user(user_login:str, password:str) -> model.User:
     user:User = get_user(login=user_login)
     if not check_user_password(user, password):

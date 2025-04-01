@@ -154,6 +154,7 @@ def get_user_home_page(page:ft.Page):
         page.go("/")
 
     
+    
     return ft.Container(
         content=ft.Column(
             controls=[
