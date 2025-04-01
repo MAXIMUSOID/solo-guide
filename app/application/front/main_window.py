@@ -57,6 +57,84 @@ def get_login_window(page:ft.Page):
                         login_field,
                         password_field,
                         ft.TextButton("Войти", on_click=login),
+                        ft.TextButton("Создать", on_click=lambda _: page.go("/user_add"))
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER
+                    ),
+                
+                
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER
+        )
+
+
+def get_create_user_page(page:ft.Page):
+    dlg_modal:ft.AlertDialog = ft.AlertDialog(
+        title=ft.Text(""),
+    )
+    rst = ft.Text("Войдите в систему под своим профилем")
+    login_field = ft.TextField(label="Логин", value="Test", width=500)
+    nickname_field = ft.TextField(label="Ник", value="Test", width=500)
+    password_field = ft.TextField(label="Пароль", password=True, value="", width=500)
+    password_field_repeate = ft.TextField(label="Повторите пароль", password=True, value="", width=500)
+
+    def login():
+        
+        header = {
+            "login":login_field.value,
+            "password":password_field.value
+        }
+        
+        result:dict = requests.post("http://0.0.0.0:8000/user/login/", data=json.dumps(header)).json()
+        rst.value=str(result)
+        rst.update()
+        if not "detail" in result.keys():
+            user.login = result["login"]
+            user.nickname = result["nickname"]
+            user.oid = result["oid"]
+            user.token = result["token"]
+        
+            page.go("/user")
+
+    def create_user(e):
+        if password_field.value == "" or password_field.value != password_field_repeate.value:
+            dlg_modal.title.value = "Пароль не может быть пустым или он не совпадает"
+            dlg_modal.update()
+            page.open(dlg_modal)
+            return
+        
+        header = {
+            "nickname":nickname_field.value,
+            "login":login_field.value,
+            "password":password_field.value
+        }
+        try:
+            responce:requests.Response = requests.post("http://0.0.0.0:8000/user/add/", data=json.dumps(header))
+            result = responce.json()
+            responce.raise_for_status()
+            login()
+        except requests.exceptions.HTTPError as errh:
+            dlg_modal.title.value = str(result["detail"]["error"])
+            dlg_modal.update()
+            page.open(dlg_modal)
+            return
+        
+
+    return ft.Column(
+            expand=True,
+            controls=[
+                dlg_modal,
+                ft.Column(
+                    expand=True,
+                    controls=[
+                        rst,
+                        nickname_field,
+                        login_field,
+                        password_field,
+                        password_field_repeate,
+                        ft.TextButton("Создать", on_click=create_user),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         alignment=ft.MainAxisAlignment.CENTER
@@ -297,6 +375,10 @@ async def main_window(page: ft.Page):
             page.views.append(
                 get_login_window(page)
             )
+        if page.route == '/user_add':
+            page.views.append(
+                get_create_user_page(page)
+            )
         if page.route == '/user':
             page.views.append(
                 get_user_home_page(page)
@@ -309,6 +391,7 @@ async def main_window(page: ft.Page):
             page.views.append(
                 add_show_place(page)
                 )
+            
         
         page.update()
     
