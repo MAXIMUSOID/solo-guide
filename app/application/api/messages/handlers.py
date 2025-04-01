@@ -90,6 +90,7 @@ async def get_all_cities_handler():
 
 @router_showplace.post(
     '/add', 
+        dependencies=[Depends(SECURITY.get_token_from_request)],
         response_model=CreateShowPlaceResponceShema, 
         status_code=status.HTTP_201_CREATED,
         description='Эндпоинт создаёт новую достопримечательность, если достопримечательность с таким названием уже существует, то возвращается 400 ошибка',
@@ -97,8 +98,12 @@ async def get_all_cities_handler():
             status.HTTP_201_CREATED: {'model': CreateShowPlaceResponceShema},
             # status.HTTP_400_BAD_REQUEST: {'model': ErrorSchema}
         })
-async def create_show_place(schema: CreateShowPlaceRequestShema):
+async def create_show_place(schema: CreateShowPlaceRequestShema, token:RequestToken = Depends()):
     '''Создать новую достопримечательность'''
+    try:
+        SECURITY.verify_token(token=token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': 'Требуется вход'})
     try:
         city = convert_city_to_model(get_city(schema.city_name))
         _show_place = ShowPlace(
