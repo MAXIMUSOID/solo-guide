@@ -146,7 +146,7 @@ def check_user_password(user:User, password:str) -> bool:
                                             User.password == model.User.get_password_hash(password)).first()
         return bool(result)
 
-def change_user_password(user:User, new_password:str):
+def _change_user_password(user:User, new_password:str):
     if not check_user(user.login):
         raise UserNotFoundException(user.login)
     
@@ -156,6 +156,13 @@ def change_user_password(user:User, new_password:str):
         update_user.password = model.User.get_password_hash(new_password)
 
         session.commit()
+
+
+def change_user_password(user_login:str, new_password:str) -> model.User:
+    user:User = get_user(user_login)
+
+    _change_user_password(user=user, new_password=new_password)
+    return convert_user_to_model(user)
 
 def get_user(login:str) -> User:
     engine = get_engine()
@@ -235,6 +242,19 @@ def add_visit(user_login:str, show_place_name:str, show_place_city:str, grade:in
         raise VisitCreateException(visit.show_place.name, visit.user.login)
     
     return test_visit
+
+def get_user_history(user_login:str) -> list[model.Visit]:
+    user = get_user(user_login)
+    
+    with Session(get_engine()) as session:
+        query = session.query(Visit, User, ShowPlace, City).join(
+            User, Visit.user_id == User.id).join(
+            ShowPlace, Visit.show_place_id == ShowPlace.id).join(
+                City, ShowPlace.city_id == City.id).filter(Visit.user_id == user.id).all()
+    
+    result = [convert_visit_to_model(*visit) for visit in query]
+    return result
+
 
 def login_user(user_login:str, password:str) -> model.User:
     user:User = get_user(login=user_login)
