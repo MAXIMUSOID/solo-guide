@@ -146,7 +146,7 @@ def check_user_password(user:User, password:str) -> bool:
                                             User.password == model.User.get_password_hash(password)).first()
         return bool(result)
 
-def change_user_password(user:User, new_password:str):
+def _change_user_password(user:User, new_password:str):
     if not check_user(user.login):
         raise UserNotFoundException(user.login)
     
@@ -156,6 +156,13 @@ def change_user_password(user:User, new_password:str):
         update_user.password = model.User.get_password_hash(new_password)
 
         session.commit()
+
+
+def change_user_password(user_login:str, new_password:str) -> model.User:
+    user:User = get_user(user_login)
+
+    _change_user_password(user=user, new_password=new_password)
+    return convert_user_to_model(user)
 
 def get_user(login:str) -> User:
     engine = get_engine()

@@ -23,10 +23,10 @@ async def lifespan(app: FastAPI):
     await flet_fastapi.app_manager.shutdown()
 
 
-def get_login_window(page:ft.Page):
+def get_login_window_page(page:ft.Page):
     rst = ft.Text("Войдите в систему под своим профилем")
-    login_field = ft.TextField(label="Логин", value="Test", width=1500)
-    password_field = ft.TextField(label="Пароль", password=True, value="test", width=1500)
+    login_field = ft.TextField(label="Логин", value="Test", width=500)
+    password_field = ft.TextField(label="Пароль", password=True, value="test", width=500)
 
     def login(e):
         
@@ -43,8 +43,12 @@ def get_login_window(page:ft.Page):
             user.nickname = result["nickname"]
             user.oid = result["oid"]
             user.token = result["token"]
-        
             page.go("/user")
+
+        else:
+            rst.value = result["detail"]["error"]
+            rst.update()
+        
         
     
     return ft.Column(
@@ -57,6 +61,7 @@ def get_login_window(page:ft.Page):
                         login_field,
                         password_field,
                         ft.TextButton("Войти", on_click=login),
+                        ft.Text("Или"),
                         ft.TextButton("Создать", on_click=lambda _: page.go("/user_add"))
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -69,12 +74,68 @@ def get_login_window(page:ft.Page):
             alignment=ft.MainAxisAlignment.CENTER
         )
 
+def get_change_user_password_page(page:ft.Page):
+    dlg_modal:ft.AlertDialog = ft.AlertDialog(
+        title=ft.Text(""),
+    )
+
+    password_field = ft.TextField(label="Пароль", password=True, value="", width=500)
+    password_field_repeate = ft.TextField(label="Повторите пароль", password=True, value="", width=500)
+    
+    def change_password(e:ft.TapEvent):
+        if password_field.value == "" or password_field.value != password_field_repeate.value:
+            dlg_modal.title.value = "Пароль не может быть пустым или он не совпадает"
+            dlg_modal.update()
+            page.open(dlg_modal)
+            return
+        
+        data = {
+            "user_login":user.login,
+            "password":password_field.value
+        }
+        try:
+            responce:requests.Response = requests.post("http://0.0.0.0:8000/user/change_password/", data=json.dumps(data), headers={'Content-Type': 'application/json' }, params={"location":"headers", "token":user.token})
+            result = responce.json()
+            responce.raise_for_status()
+            dlg_modal.title.value = "Пароль успешно изменён"
+            dlg_modal.update()
+            page.open(dlg_modal)
+        except requests.exceptions.HTTPError as errh:
+            dlg_modal.title.value = str(result["detail"]["error"])
+            dlg_modal.update()
+            page.open(dlg_modal)
+            return
+    
+
+    return ft.Column(
+            expand=True,
+            controls=[
+                dlg_modal,
+                ft.Column(
+                    expand=True,
+                    controls=[
+                        password_field,
+                        password_field_repeate,
+                        ft.TextButton("Назад", on_click=lambda _: page.go("/user")),
+                        ft.TextButton("Изменить", on_click=change_password),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER
+                    ),
+                
+                
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER
+        )
+    ...
+
 
 def get_create_user_page(page:ft.Page):
     dlg_modal:ft.AlertDialog = ft.AlertDialog(
         title=ft.Text(""),
     )
-    rst = ft.Text("Войдите в систему под своим профилем")
+    rst = ft.Text("Создайте свой профиль")
     login_field = ft.TextField(label="Логин", value="Test", width=500)
     nickname_field = ft.TextField(label="Ник", value="Test", width=500)
     password_field = ft.TextField(label="Пароль", password=True, value="", width=500)
@@ -134,7 +195,13 @@ def get_create_user_page(page:ft.Page):
                         login_field,
                         password_field,
                         password_field_repeate,
-                        ft.TextButton("Создать", on_click=create_user),
+                        ft.Row(
+                            controls=[
+                            ft.TextButton("Создать", on_click=create_user),
+                            ft.TextButton("Назад", on_click=lambda _: page.go("/"))
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER
+                        ),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         alignment=ft.MainAxisAlignment.CENTER
@@ -149,9 +216,6 @@ def get_create_user_page(page:ft.Page):
 def get_user_home_page(page:ft.Page):
     if user.token == "":
         page.go("/")
-    def exit(e):
-        user.clear()
-        page.go("/")
 
     data = {
         "user_login":user.login
@@ -161,34 +225,28 @@ def get_user_home_page(page:ft.Page):
     )
     try:
         responce = requests.post("http://0.0.0.0:8000/user/history/", data=json.dumps(data), headers={'Content-Type': 'application/json' }, params={"location":"headers", "token":user.token})
-        result = responce.json()
+        result:dict = responce.json()
         responce.raise_for_status()
         
     except requests.exceptions.HTTPError:
         ...
-    for i in result["visits"]:
-        history_data.controls.append(
-            ft.Row(
-                controls=[
-                    ft.Text(i["show_place"]["name"]),
-                    ft.Text(i["show_place"]["city"]["name"]),
-                    ft.Text(i["review"])
-                ]
+    if "visits" in result.keys():
+        for i in result["visits"]:
+            history_data.controls.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(i["show_place"]["name"]),
+                        ft.Text(i["show_place"]["city"]["name"]),
+                        ft.Text(i["review"])
+                    ]
+                )
             )
-        )
-    
+        
     return ft.Container(
         content=ft.Column(
             controls=[
-                ft.Row(
-                    controls=[
-                        ft.Text(user.nickname),
-                        ft.TextButton("Выйти", on_click=exit)
-                    ],
-                    alignment=ft.MainAxisAlignment.END
-                ),
-                ft.TextButton("Найти достопримечательность", on_click= lambda _: page.go("/watch_showplace")),
-                ft.TextButton("Добавить достопримечательность", on_click= lambda _: page.go("/add_showplace")),
+                ft.Text(f"Здравстуй, {user.nickname}. Попутешествуем?"),
+                ft.Text("Мои путь"),
                 history_data
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -199,9 +257,7 @@ def get_get_all_showplace(page:ft.Page):
     if user.token == "":
         page.go("/")
 
-    def exit(e):
-        user.clear()
-        page.go("/")
+
 
     dlg:ft.AlertDialog = ft.AlertDialog(
         title=ft.Text(""),
@@ -213,7 +269,6 @@ def get_get_all_showplace(page:ft.Page):
     review_field = ft.TextField("Отзыв")
 
     def create_review(e:ft.TapEvent):
-        # raise ValueError(e.control.data)
         add_review(show_place_name=e.control.data["show_place_name"], show_place_city_name=e.control.data["show_place_city"])
 
     def add_review(show_place_name, show_place_city_name):
@@ -242,7 +297,7 @@ def get_get_all_showplace(page:ft.Page):
         ...
 
     review_dialog = ft.AlertDialog(
-        modal=True,
+        # modal=True,
         title=ft.Text("Оставьте свой отзыв"),
         content=ft.Column(
             controls=[
@@ -309,13 +364,6 @@ def get_get_all_showplace(page:ft.Page):
     return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Row(
-                    controls=[
-                        ft.Text(user.nickname),
-                        ft.TextButton("Выйти", on_click=exit)
-                    ],
-                    alignment=ft.MainAxisAlignment.END
-                    ),
                     dlg,
                     review_dialog,
                     city_name,
@@ -443,43 +491,128 @@ def add_show_place(page: ft.Page):
         )
     )
 
+
     
 
 async def main_window(page: ft.Page):
     page.title = "Сам себе гид"
+    page.appbar = ft.AppBar(title=ft.Text("fffffffff"))
+
+    def exit(e):
+        user.clear()
+        page.go("/")
 
     def route_change(route):
         page.views.clear()
+
+        top_bar = ft.Column(
+            width=3000,
+            # expand=True,
+            controls=[
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Row(
+                                controls=[
+                                    ft.Text("Сам себе гид"),
+                                    ft.TextButton("Найти достопримечательность", on_click= lambda _: page.go("/watch_showplace")),
+                                    ft.TextButton("Добавить достопримечательность", on_click= lambda _: page.go("/add_showplace")),
+                                ],
+                            ),
+                            ft.Row(
+                            controls=[
+                                ft.Text(user.nickname),
+                                ft.TextButton("Изменить пароль", on_click=lambda _: page.go("/user/change_password")),
+                                ft.TextButton("Выйти", on_click=exit)
+                            ],
+                            alignment=ft.MainAxisAlignment.END
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    )
+                )
+            ],
+            alignment=ft.MainAxisAlignment.START
+        )
         
         # page.views.append(
             
         # )
         
         if page.route == '/' or user.token == "":
-            
             page.views.append(
-                get_login_window(page)
+                ft.Column(
+                    controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text("Сам себе гид"),
+                        ]
+                    ),
+                    get_login_window_page(page),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
             )
         if page.route == '/user_add':
             page.views.append(
-                get_create_user_page(page)
+                ft.Column(
+                    controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Text("Сам себе гид"),
+                        ]
+                    ),
+                    get_create_user_page(page),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
             )
         if page.route == '/user':
             page.views.append(
-                get_user_home_page(page)
+                ft.Column(
+                    controls=[
+                    top_bar,
+                    get_user_home_page(page),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
+            )
+        if page.route == '/user/change_password':
+            page.views.append(
+                ft.Column(
+                    controls=[
+                    top_bar,
+                    get_change_user_password_page(page),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
             )
         if page.route == '/watch_showplace':
             page.views.append(
-                get_get_all_showplace(page)
+                ft.Column(
+                    controls=[
+                    top_bar,
+                    get_get_all_showplace(page),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
                 )
         if page.route == '/add_showplace':
             page.views.append(
-                add_show_place(page)
+                ft.Column(
+                    controls=[
+                    top_bar,
+                    add_show_place(page),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
                 )
             
         
         page.update()
     
+    
+
     def view_pop(view):
         page.views.pop()
         top_view = page.views[-1]

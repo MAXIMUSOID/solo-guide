@@ -10,8 +10,8 @@ from domain.entities.model import City, ShowPlace, User, Visit
 from infra.repository.converter import convert_city_to_model
 from domain.entities.place_types import PlaceType
 from infra.repository.exceptions.base import RepositoryException
-from application.api.messages.shemas import (CreateCityRequestShema, 
-                                             CreateCityResponceShema, 
+from application.api.messages.shemas import (ChangePasswordRequestSchema, ChangePasswordResponceSchema, CreateCityRequestSchema, 
+                                             CreateCityResponceSchema, 
                                              CreateShowPlaceRequestShema, 
                                              CreateShowPlaceResponceShema, 
                                              CreateUserRequestSchema, 
@@ -24,7 +24,7 @@ from application.api.messages.shemas import (CreateCityRequestShema,
                                              LoginUserRequestSchema, 
                                              LoginUserResponceShcema,
                                              )
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_history, get_user_to_model, login_user
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, get_cities, get_city, get_show_place, get_show_places_by_city, get_user_history, get_user_to_model, login_user
 
 router = APIRouter(tags=['City'])
 router_showplace = APIRouter(tags=['Show Place'])
@@ -33,22 +33,22 @@ router_visit = APIRouter(tags=['Visit'])
 
 @router.post(
         '/add', 
-        response_model=CreateCityResponceShema, 
+        response_model=CreateCityResponceSchema, 
         status_code=status.HTTP_201_CREATED,
         description='Эндпоинт создаёт новый город, если город с таким названием уже существует, то возвращается 400 ошибка',
         responses={
-            status.HTTP_201_CREATED: {'model': CreateCityResponceShema},
+            status.HTTP_201_CREATED: {'model': CreateCityResponceSchema},
             # status.HTTP_400_BAD_REQUEST: {'model': ErrorSchema}
         }
 )
-async def create_city_handler(schema: CreateCityRequestShema):
+async def create_city_handler(schema: CreateCityRequestSchema):
     '''Создать новый город'''
     try:
         _city = City(name=schema.name, country=schema.country)
         city = add_city(_city)
     except RepositoryException as exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
-    return CreateCityResponceShema.from_entity(city)
+    return CreateCityResponceSchema.from_entity(city)
 
 
 @router.get(
@@ -146,10 +146,37 @@ async def create_user(schema:CreateUserRequestSchema):
     return CreateUserResponceSchema.from_entity(user)
 
 @router_user.post(
+    '/change_password',
+    dependencies=[Depends(SECURITY.get_token_from_request)],
+    response_model=ChangePasswordResponceSchema,
+    status_code=status.HTTP_202_ACCEPTED,
+    description='Эндпоинт меняет пароль пользователя',
+    responses={
+        status.HTTP_201_CREATED: {'model': ChangePasswordResponceSchema}
+    })
+async def create_user(schema:ChangePasswordRequestSchema, token:RequestToken = Depends()):
+    '''
+    Изменить пароль пользователя
+    '''
+    try:
+        SECURITY.verify_token(token=token)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={'error': 'Требуется вход'})
+    try:
+        
+        user = change_user_password(user_login=schema.user_login, new_password=schema.password)
+    except RepositoryException as exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
+    except BaseEntityException as exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'error': exception.message})
+    
+    return ChangePasswordResponceSchema.from_entity(user)
+
+@router_user.post(
     '/login',
     response_model=LoginUserResponceShcema,
     status_code=status.HTTP_200_OK,
-    description='Эндпоинт вход пользователя пользователя',
+    description='Эндпоинт вход пользователя',
     responses={
         status.HTTP_201_CREATED: {'model': LoginUserResponceShcema}
     })

@@ -6,7 +6,7 @@ from infra.repository.exceptions.user import IncorrectUserPassword, UserAlreadyE
 from infra.repository.exceptions.route_to_db import CitiesNotFoundException, CityAlreadyExistException, CityNotFoundException, ShowPlaceAlreadyExistException, ShowPlacesCityNotFoundException, VisitAlreadyExistException
 from infra.repository.clear_db import clear_all
 from infra.repository.connect import _init_db
-from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, change_user_password, check_user_password, get_cities, get_show_places_by_city, get_user_history, login_user
+from infra.repository.entrypoint import add_city, add_show_place, add_user, add_visit, _change_user_password, check_user_password, get_cities, get_show_places_by_city, get_user_history, login_user
 
 
 _init_db(is_test=True)
@@ -130,7 +130,7 @@ def test_change_password():
     user_added = add_user(user, "12345")
 
     assert check_user_password(user_added, "12345")
-    change_user_password(user, "asd")
+    _change_user_password(user, "asd")
 
     assert check_user_password(user, "asd")
 

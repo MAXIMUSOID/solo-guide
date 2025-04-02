@@ -5,18 +5,18 @@ from pydantic import BaseModel
 from domain.entities.model import City, ShowPlace, User, Visit
 
 
-class CreateCityRequestShema(BaseModel):
+class CreateCityRequestSchema(BaseModel):
     name:str
     country:str
 
 
-class CreateCityResponceShema(BaseModel):
+class CreateCityResponceSchema(BaseModel):
     name:str
     country:str
 
     @classmethod
-    def from_entity(cls, city: City) -> 'CreateCityResponceShema':
-        return CreateCityResponceShema(
+    def from_entity(cls, city: City) -> 'CreateCityResponceSchema':
+        return CreateCityResponceSchema(
             name=city.name,
             country=city.country
         )
@@ -111,7 +111,21 @@ class LoginUserResponceShcema(BaseModel):
             oid=user.oid,
             token=token
         )
+    
+class ChangePasswordRequestSchema(BaseModel):
+    user_login:str
+    password:str
 
+
+class ChangePasswordResponceSchema(BaseModel):
+    user:User
+
+    @classmethod
+    def from_entity(cls, user:User) -> 'ChangePasswordResponceSchema':
+        return ChangePasswordResponceSchema(
+            user=user
+        ) 
+    
 
 class CreateVisitRequestSchema(BaseModel):
     user_login:str
